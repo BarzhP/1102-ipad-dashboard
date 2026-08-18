@@ -8,6 +8,9 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Smart Home Dashboard</title>
   <style>
+    /* 全局字體放大 10% (預設為 100%) */
+    html { font-size: 110%; }
+    
     :root {
       --bg: #F4F6F9; --card-bg: #FFFFFF; --text-main: #2C3E50; --text-sub: #7F8C8D;
       --kmb-red: #E3002B; --mtr-red: #92062C; --lrt-orange: #D35400; --nlb-blue: #2980B9;
@@ -41,14 +44,14 @@
     .transit-item.nlb { border-color: var(--nlb-blue); }
     
     .transit-meta { display: flex; align-items: center; gap: 12px; }
-    .route-num { font-size: 1.4rem; font-weight: 800; width: 65px; text-align: center; }
+    /* 解決屯馬線斷行問題：加闊 min-width 並強制不換行 (nowrap) */
+    .route-num { font-size: 1.4rem; font-weight: 800; min-width: 85px; text-align: center; white-space: nowrap; flex-shrink: 0; }
     .route-dest { font-weight: 700; font-size: 1.1rem; }
     .route-stop { font-size: 0.85rem; color: var(--text-sub); }
     
     .eta-box { text-align: right; min-width: 80px; }
     .eta-min { font-size: 1.8rem; font-weight: 800; color: var(--green); }
     .eta-next { font-size: 0.85rem; color: var(--text-sub); margin-top: 2px; }
-    /* 無班次時的灰色小字體 */
     .error-text { font-size: 1.05rem; color: #94A3B8; font-weight: 600; } 
   </style>
 </head>
@@ -60,6 +63,10 @@
         <div class="time" id="clock">00:00</div>
         <div class="date" id="date-str">--月--日</div>
       </div>
+      
+      <!-- 天氣警告標誌專區 (預設為空) -->
+      <div id="warning-container" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;"></div>
+      
       <div class="section-title">天水圍天氣</div>
       <div class="weather-current">
         <div class="temp-big" id="current-temp">--°</div>
@@ -101,7 +108,7 @@
     let kmbStopDict = {}; 
     let nlbB2pInfo = null;
 
-    // --- 時間與天氣系統 ---
+    // --- 時間系統 ---
     function updateClock() {
       const now = new Date();
       document.getElementById('clock').textContent = now.toTimeString().slice(0, 5);
@@ -110,9 +117,42 @@
     }
     setInterval(updateClock, 1000); updateClock();
 
+    // --- 天氣及警告信號系統 ---
     async function fetchWeather() {
       try {
         const rhrRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc').then(r=>r.json());
+        
+        // 渲染天氣警告標誌
+        const warnContainer = document.getElementById('warning-container');
+        if (rhrRes.warningMessage && rhrRes.warningMessage.length > 0) {
+           let warnHtml = '';
+           rhrRes.warningMessage.forEach(msg => {
+               let name = msg.replace('現正生效', '').trim();
+               let bg = '#E74C3C'; let icon = '⚠️'; let textColor = '#FFFFFF';
+               
+               // 自動配對顏色及 Emoji Logo
+               if (name.includes('雷暴')) { bg = '#8E44AD'; icon = '🌩️'; }
+               else if (name.includes('黃色暴雨')) { bg = '#F1C40F'; icon = '🟨'; textColor = '#000000'; }
+               else if (name.includes('紅色暴雨')) { bg = '#E74C3C'; icon = '🟥'; }
+               else if (name.includes('黑色暴雨')) { bg = '#2C3E50'; icon = '⬛'; }
+               else if (name.includes('一號') || name.includes('三號') || name.includes('八號') || name.includes('九號') || name.includes('十號')) { bg = '#34495E'; icon = '🌀'; }
+               else if (name.includes('酷熱')) { bg = '#D35400'; icon = '🥵'; }
+               else if (name.includes('寒冷')) { bg = '#2980B9'; icon = '🥶'; }
+               else if (name.includes('火災危險')) {
+                   if (name.includes('黃色')) { bg = '#F39C12'; icon = '🔥'; name='黃色火災危險'; textColor = '#000000'; }
+                   else { bg = '#C0392B'; icon = '🔥'; name='紅色火災危險'; }
+               }
+               else if (name.includes('季候風')) { bg = '#16A085'; icon = '💨'; }
+               else if (name.includes('山泥傾瀉')) { bg = '#7F8C8D'; icon = '⛰️'; }
+
+               warnHtml += `<div style="background: ${bg}; color: ${textColor}; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);"><span>${icon}</span><span>${name}</span></div>`;
+           });
+           warnContainer.innerHTML = warnHtml;
+        } else {
+           warnContainer.innerHTML = '';
+        }
+
+        // 渲染溫度及濕度
         const tswTemp = rhrRes.temperature.data.find(d => d.place === '天水圍' || d.place === '香港濕地公園');
         if (tswTemp) document.getElementById('current-temp').textContent = `${tswTemp.value}°`;
         if (rhrRes.humidity) document.getElementById('humidity').textContent = `濕度: ${rhrRes.humidity.data[0].value}%`;
@@ -135,7 +175,6 @@
       return new Date(s);
     }
 
-    // 優化版：自動判斷係咪有車，無車就顯示灰色細字
     function createCard(type, route, dest, stopName, eta1, eta2) {
       const primaryEta = eta1 || '目前無班次';
       const isNormal = primaryEta.includes('分鐘') || primaryEta.includes('到達');
@@ -188,7 +227,7 @@
       const now = new Date();
 
       try {
-        // [1] 屯馬線 (自訂收車字眼為：尾班車已開出)
+        // [1] 屯馬線
         const mtrRes = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=TML&sta=${MTR_TML_STATION}`).then(r=>r.json());
         if (mtrRes.data && mtrRes.data[`TML-${MTR_TML_STATION}`]) {
           const tml = mtrRes.data[`TML-${MTR_TML_STATION}`];
