@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
-  <!-- 隱形斗篷：防止 Google 等搜尋引擎收錄，確保私隱安全 -->
   <meta name="robots" content="noindex, nofollow">
-  
   <title>Smart Home Dashboard</title>
   <style>
     :root {
@@ -51,7 +48,7 @@
     .eta-box { text-align: right; min-width: 80px; }
     .eta-min { font-size: 1.8rem; font-weight: 800; color: var(--green); }
     .eta-next { font-size: 0.85rem; color: var(--text-sub); margin-top: 2px; }
-    .error-text { font-size: 1rem; color: #E74C3C; font-weight: bold; }
+    .error-text { font-size: 1.1rem; color: var(--text-sub); font-weight: bold; }
   </style>
 </head>
 <body>
@@ -88,11 +85,11 @@
 
   <script>
     // ==========================================
-    // 1. 用戶設定區 (自動尋站引擎)
+    // 1. 用戶設定區 
     // ==========================================
-    const MY_STOP_NAME = '天慈'; // 自動尋找包含此字眼的車站
-    const MTR_TML_STATION = 'TIS'; // 屯馬線：天水圍站
-    const LRT_STATION = '435'; // 輕鐵：天慈站
+    const MY_STOP_NAME = '天慈'; 
+    const MTR_TML_STATION = 'TIS'; 
+    const LRT_STATION = '435'; 
     
     const KMB_ROUTES = [
       { route: '276B', dir: 'O', dest: '上水' },
@@ -148,7 +145,7 @@
             </div>
           </div>
           <div class="eta-box">
-            ${eta1 ? `<div class="eta-min">${eta1}</div>` : `<div class="error-text">暫無資料</div>`}
+            ${eta1 && eta1.includes('分鐘') || eta1.includes('到達') ? `<div class="eta-min">${eta1}</div>` : `<div class="error-text">${eta1 || '服務已完結'}</div>`}
             ${eta2 ? `<div class="eta-next">下班: ${eta2}</div>` : ''}
           </div>
         </div>
@@ -159,7 +156,9 @@
       try {
         const kmbAllStops = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop').then(r=>r.json()).then(j=>j.data);
         for(let r of KMB_ROUTES) {
-          const routeStops = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${r.route}/${r.dir}/1`).then(r=>r.json()).then(j=>j.data);
+          // 修復尋站 Bug：將 'O' 轉換為 API 要求的 'outbound'
+          const apiDir = r.dir === 'O' ? 'outbound' : 'inbound';
+          const routeStops = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${r.route}/${apiDir}/1`).then(r=>r.json()).then(j=>j.data);
           for(let rs of routeStops) {
             const sInfo = kmbAllStops.find(s => s.stop === rs.stop);
             if(sInfo && sInfo.name_tc.includes(MY_STOP_NAME)) {
@@ -168,6 +167,7 @@
             }
           }
         }
+        
         const nlbRoutes = await fetch('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list').then(r=>r.json()).then(j=>j.routes);
         const b2pRoute = nlbRoutes.find(r => r.routeName_c === 'B2P');
         if(b2pRoute) {
@@ -184,21 +184,30 @@
       const now = new Date();
 
       try {
-        // [1] 屯馬線
+        // [1] 屯馬線 (修復 undefined 問題)
         const mtrRes = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=TML&sta=${MTR_TML_STATION}`).then(r=>r.json());
         if (mtrRes.data && mtrRes.data[`TML-${MTR_TML_STATION}`]) {
           const tml = mtrRes.data[`TML-${MTR_TML_STATION}`];
-          if(tml.UP) html += createCard('mtr', '屯馬線', '烏溪沙', '天水圍站 (1號月台)', tml.UP[0]?.ttnt + ' 分鐘', tml.UP[1]?.ttnt ? tml.UP[1].ttnt + ' 分鐘' : '');
-          if(tml.DOWN) html += createCard('mtr', '屯馬線', '屯門', '天水圍站 (2號月台)', tml.DOWN[0]?.ttnt + ' 分鐘', tml.DOWN[1]?.ttnt ? tml.DOWN[1].ttnt + ' 分鐘' : '');
+          const getEta = (arr, index) => arr && arr[index] && arr[index].ttnt ? arr[index].ttnt + ' 分鐘' : '';
+          
+          const up1 = getEta(tml.UP, 0); const up2 = getEta(tml.UP, 1);
+          html += createCard('mtr', '屯馬線', '烏溪沙', '天水圍站 (1號月台)', up1 || '服務已完結', up2);
+          
+          const dn1 = getEta(tml.DOWN, 0); const dn2 = getEta(tml.DOWN, 1);
+          html += createCard('mtr', '屯馬線', '屯門', '天水圍站 (2號月台)', dn1 || '服務已完結', dn2);
         }
 
-        // [2] 輕鐵
+        // [2] 輕鐵 (修復 s 分鐘問題)
         const lrtRes = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${LRT_STATION}`).then(r=>r.json());
         if (lrtRes.platform_list) {
           lrtRes.platform_list.forEach(plat => {
             if(plat.route_list && plat.route_list.length > 0) {
               const r = plat.route_list[0]; const r2 = plat.route_list[1];
-              const formatTime = (t) => (!t || t==='-' || t.toLowerCase()==='arriving') ? '即將到達' : t.replace(' min','') + ' 分鐘';
+              const formatTime = (t) => {
+                if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
+                // 移除 min 或 mins，避免出現 s
+                return t.replace(/ mins?/gi, '') + ' 分鐘';
+              };
               html += createCard('lrt', r.route_no, r.dest_ch, `天慈站 (月台 ${plat.platform_id})`, formatTime(r.time_en), r2 ? formatTime(r2.time_en) : '');
             }
           });
@@ -211,15 +220,20 @@
             const kmbRes = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${info.stopId}/${r.route}/1`).then(res=>res.json());
             const validEtas = kmbRes.data.filter(e => e.dir === r.dir && e.eta).map(e => e.eta).sort();
             const etas = validEtas.map(etaStr => Math.max(0, Math.floor((parseSafeDate(etaStr) - now) / 60000)));
+            
             if(etas.length > 0) {
               html += createCard('kmb', r.route, r.dest, info.stopName, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
             } else {
-              html += createCard('kmb', r.route, r.dest, info.stopName, '暫無班次', '');
+              html += createCard('kmb', r.route, r.dest, info.stopName, '服務已完結', '');
             }
+          } else {
+            // 如果尋站未完成或失敗，顯示預設卡片
+             html += createCard('kmb', r.route, r.dest, '天慈邨', '載入中/無班次', '');
           }
         }
 
         // [4] K73 港鐵巴士
+        let k73Card = createCard('mtr', 'K73', '元朗西', '天慈邨', '服務已完結', '');
         const mtrbRes = await fetch('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', {
           method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({language: "zh", routeName: "K73"})
         }).then(r=>r.json());
@@ -227,9 +241,10 @@
           const targetStop = mtrbRes.busStop.find(s => s.busStopName.includes(MY_STOP_NAME));
           if(targetStop && targetStop.bus && targetStop.bus.length > 0) {
             const e1 = targetStop.bus[0].departureTimeInMinute; const e2 = targetStop.bus[1]?.departureTimeInMinute;
-            html += createCard('mtr', 'K73', '元朗西', targetStop.busStopName, e1==='0'?'即將到達':e1+' 分鐘', e2?(e2==='0'?'即將到達':e2+' 分鐘'):'');
+            k73Card = createCard('mtr', 'K73', '元朗西', targetStop.busStopName, e1==='0'?'即將到達':e1+' 分鐘', e2?(e2==='0'?'即將到達':e2+' 分鐘'):'');
           }
         }
+        html += k73Card;
 
         // [5] B2P 新大嶼山巴士
         if(nlbB2pInfo) {
@@ -239,8 +254,10 @@
             const etas = nlbRes.estimatedArrivals.map(e => Math.max(0, Math.floor((parseSafeDate(e.estimatedArrivalTime) - now) / 60000)));
             html += createCard('nlb', 'B2P', '深圳灣', info.stopName, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
           } else {
-            html += createCard('nlb', 'B2P', '深圳灣', info.stopName, '暫無班次', '');
+            html += createCard('nlb', 'B2P', '深圳灣', info.stopName, '服務已完結', '');
           }
+        } else {
+           html += createCard('nlb', 'B2P', '深圳灣', '天慈邨', '載入中/無班次', '');
         }
 
       } catch (e) { console.error('更新交通失敗', e); }
