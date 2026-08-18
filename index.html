@@ -18,7 +18,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
-    /* 改為上下排列佈局 */
+    /* 上下排列佈局 */
     body { background-color: var(--bg); color: var(--text-main); padding: 20px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; gap: 20px; }
     
     /* 上部分：頂部控制台 */
@@ -52,7 +52,7 @@
     .spin-anim { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    /* 專為 iPad Air 3 打造的 3 欄式網格佈局 */
+    /* iPad 3 欄式網格佈局 */
     .transport-container { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 5px; }
     .transport-container::-webkit-scrollbar { width: 8px; }
     .transport-container::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
@@ -120,7 +120,6 @@
 
   <!-- 下部分：交通實時到站 -->
   <div class="bottom-panel">
-    <!-- 固定的頂部 Header 與手動更新按鈕 -->
     <div class="section-header">
       <div>
         <div style="font-size: 1.3rem; font-weight: 800; color: var(--text-sub);">實時交通狀態</div>
@@ -147,6 +146,13 @@
     const MTR_TML_STATION = 'TIS'; 
     const LRT_STATION = '435'; 
     
+    // 天慈站輕鐵常駐路線 (防止深夜無車時卡片消失)
+    const LRT_EXPECTED_ROUTES = [
+      { route: '706', dest: '天水圍循環線' },
+      { route: '751', dest: '天逸' },
+      { route: '751', dest: '友愛' }
+    ];
+
     const KMB_ROUTES = [
       { route: '276B', dir: 'O', dest: '上水', stopKw: '天慈' },
       { route: '269M', dir: 'O', dest: '祖堯', stopKw: '天慈' },
@@ -267,27 +273,46 @@
           html += createCard('mtr', '屯馬線', '屯門', '2號月台', dn1 || '尾班車已開出', dn2);
         }
 
-        // [2] 輕鐵
+        // [2] 輕鐵 (加入常駐路線保護機制)
         const lrtRes = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${LRT_STATION}`).then(r=>r.json());
+        let lrtDataMap = {};
+        
         if (lrtRes.platform_list) {
-          let lrtGroups = {};
           lrtRes.platform_list.forEach(plat => {
             if(plat.route_list) {
               plat.route_list.forEach(train => {
                  const key = `${train.route_no}-${train.dest_ch}`;
-                 if(!lrtGroups[key]) lrtGroups[key] = { route: train.route_no, dest: train.dest_ch, plat: plat.platform_id, times: [] };
-                 lrtGroups[key].times.push(train.time_en);
+                 if(!lrtDataMap[key]) lrtDataMap[key] = { route: train.route_no, dest: train.dest_ch, plat: plat.platform_id, times: [] };
+                 lrtDataMap[key].times.push(train.time_en);
               });
             }
           });
-          Object.values(lrtGroups).forEach(g => {
-             const formatTime = (t) => {
-                if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
-                return t.replace(/ mins?/gi, '') + ' 分鐘';
-             };
-             html += createCard('lrt', g.route, g.dest, `月台 ${g.plat}`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
-          });
         }
+        
+        // 渲染常駐輕鐵路線
+        LRT_EXPECTED_ROUTES.forEach(ex => {
+           const key = `${ex.route}-${ex.dest}`;
+           if(lrtDataMap[key]) {
+              const g = lrtDataMap[key];
+              const formatTime = (t) => {
+                 if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
+                 return t.replace(/ mins?/gi, '') + ' 分鐘';
+              };
+              html += createCard('lrt', g.route, g.dest, `月台 ${g.plat}`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
+              delete lrtDataMap[key]; // 渲染完就刪除
+           } else {
+              html += createCard('lrt', ex.route, ex.dest, '天慈站', '目前無班次', '');
+           }
+        });
+        
+        // 渲染其他非常規路線 (如 751P)
+        Object.values(lrtDataMap).forEach(g => {
+           const formatTime = (t) => {
+              if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
+              return t.replace(/ mins?/gi, '') + ' 分鐘';
+           };
+           html += createCard('lrt', g.route, g.dest, `月台 ${g.plat}`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
+        });
 
         // [3] KMB 九巴
         for(let r of KMB_ROUTES) {
