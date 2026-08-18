@@ -14,7 +14,7 @@
     :root {
       --bg: #F4F6F9; --card-bg: #FFFFFF; --text-main: #2C3E50; --text-sub: #7F8C8D;
       --kmb-red: #E3002B; --mtr-red: #92062C; --lrt-orange: #D35400; --nlb-blue: #2980B9;
-      --green: #27AE60; --radius: 16px;
+      --green: #27AE60; --primary: #3498DB; --radius: 16px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg); color: var(--text-main); padding: 18px; height: 100vh; overflow: hidden; }
@@ -40,11 +40,16 @@
     .metric-label { font-size: 0.9rem; font-weight: 700; opacity: 0.8; }
     .metric-value { font-size: 1.6rem; font-weight: 800; line-height: 1.2; }
 
-    /* Right Panel: Transport (Scrollable) */
+    /* Right Panel: Transport Header & Container */
+    .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #ECEFF1; padding-bottom: 12px; margin-bottom: 12px; flex-shrink: 0; }
+    .update-btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 1rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(52,152,219,0.3); transition: opacity 0.2s; }
+    .update-btn:active { opacity: 0.7; }
+    .spin-anim { animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
     .transport-container { overflow-y: scroll; -webkit-overflow-scrolling: touch; padding-right: 5px; height: 100%; }
     .transport-container::-webkit-scrollbar { width: 6px; }
     .transport-container::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-    .section-title { font-size: 1.1rem; font-weight: 700; color: var(--text-sub); margin: 12px 0; display: flex; justify-content: space-between; position: sticky; top: 0; background: var(--card-bg); padding-bottom: 5px; z-index: 10; }
     
     .transit-item { background: #F8FAFC; border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #CBD5E1; }
     .transit-item.mtr { border-color: var(--mtr-red); }
@@ -75,7 +80,7 @@
       <!-- 天氣警告標誌專區 -->
       <div id="warning-container" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;"></div>
       
-      <div class="section-title">天水圍天氣</div>
+      <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-sub); margin-bottom: 12px;">天水圍天氣</div>
       <div class="weather-current">
         <div class="temp-big" id="current-temp">--°</div>
         <div class="temp-details">
@@ -103,12 +108,22 @@
     </div>
 
     <!-- 右欄：交通實時到站 -->
-    <div class="card">
-      <div class="transport-container" id="transport-list">
-        <div class="section-title">
-          <span>實時交通狀態</span>
-          <span id="update-time" style="font-size: 0.85rem; font-weight: normal;">初始化系統中...</span>
+    <div class="card" style="padding-bottom: 5px;">
+      
+      <!-- 固定的頂部 Header 與手動更新按鈕 -->
+      <div class="section-header">
+        <div>
+          <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-sub);">實時交通狀態</div>
+          <div id="update-time" style="font-size: 0.9rem; font-weight: 600; color: #94A3B8; margin-top: 2px;">初始化系統中...</div>
         </div>
+        <button class="update-btn" onclick="forceUpdate()">
+          <span id="refresh-icon">🔄</span> 手動更新
+        </button>
+      </div>
+
+      <!-- 可捲動的交通列表 -->
+      <div class="transport-container" id="transport-list">
+         <!-- 卡片會喺度生成 -->
       </div>
     </div>
   </div>
@@ -130,7 +145,7 @@
     let kmbStopDict = {}; 
     let nlbB2pInfo = null;
 
-    // --- 時間系統 (修復 3:4 問題) ---
+    // --- 時間系統 ---
     function formatTimeZeros(nowObj) {
       const h = nowObj.getHours().toString().padStart(2, '0');
       const m = nowObj.getMinutes().toString().padStart(2, '0');
@@ -150,12 +165,11 @@
       try {
         const rhrRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc').then(r=>r.json());
         
-        // 渲染天氣警告標誌 (放大 + 去除句號)
+        // 渲染天氣警告標誌
         const warnContainer = document.getElementById('warning-container');
         if (rhrRes.warningMessage && rhrRes.warningMessage.length > 0) {
            let warnHtml = '';
            rhrRes.warningMessage.forEach(msg => {
-               // 去除「現正生效」及結尾「。」
                let name = msg.replace('現正生效', '').replace(/。/g, '').trim();
                let bg = '#E74C3C'; let icon = '⚠️'; let textColor = '#FFFFFF';
                
@@ -178,7 +192,7 @@
         let finalTemp = null;
         for (let p of backupPlaces) {
             finalTemp = rhrRes.temperature.data.find(d => d.place === p);
-            if (finalTemp) break; // 一搵到有數據就停
+            if (finalTemp) break; 
         }
         if (finalTemp) document.getElementById('current-temp').textContent = `${finalTemp.value}°`;
         
@@ -225,34 +239,8 @@
       `;
     }
 
-    async function autoFindStopIds() {
-      try {
-        const kmbAllStops = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop').then(r=>r.json()).then(j=>j.data);
-        for(let r of KMB_ROUTES) {
-          const apiDir = r.dir === 'O' ? 'outbound' : 'inbound';
-          const routeStops = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${r.route}/${apiDir}/1`).then(r=>r.json()).then(j=>j.data);
-          for(let rs of routeStops) {
-            const sInfo = kmbAllStops.find(s => s.stop === rs.stop);
-            if(sInfo && sInfo.name_tc.includes(MY_STOP_NAME)) {
-              kmbStopDict[r.route] = { stopId: rs.stop, stopName: sInfo.name_tc };
-              break;
-            }
-          }
-        }
-        
-        const nlbRoutes = await fetch('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list').then(r=>r.json()).then(j=>j.routes);
-        const b2pRoute = nlbRoutes.find(r => r.routeName_c === 'B2P');
-        if(b2pRoute) {
-          const nlbStops = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${b2pRoute.routeId}`).then(r=>r.json()).then(j=>j.stops);
-          const targetStop = nlbStops.find(s => s.stopName_c.includes(MY_STOP_NAME));
-          if(targetStop) nlbB2pInfo = { routeId: b2pRoute.routeId, stopId: targetStop.stopId, stopName: targetStop.stopName_c };
-        }
-        fetchAllTransport();
-      } catch(e) { console.error('尋找車站ID失敗', e); }
-    }
-
     async function fetchAllTransport() {
-      let html = `<div class="section-title"><span>實時交通狀態</span><span id="update-time" style="font-size: 0.9rem; font-weight: bold;">最後更新 ${formatTimeZeros(new Date())}</span></div>`;
+      let html = '';
       const now = new Date();
 
       try {
@@ -269,10 +257,10 @@
           html += createCard('mtr', '屯馬線', '屯門', '天水圍站 (2號月台)', dn1 || '尾班車已開出', dn2);
         }
 
-        // [2] 輕鐵 (重寫：按路線及目的地分組顯示)
+        // [2] 輕鐵
         const lrtRes = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${LRT_STATION}`).then(r=>r.json());
         if (lrtRes.platform_list) {
-          let lrtGroups = {}; // 用於將相同路線組合
+          let lrtGroups = {};
           lrtRes.platform_list.forEach(plat => {
             if(plat.route_list) {
               plat.route_list.forEach(train => {
@@ -282,7 +270,6 @@
               });
             }
           });
-          
           Object.values(lrtGroups).forEach(g => {
              const formatTime = (t) => {
                 if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
@@ -340,14 +327,62 @@
 
       } catch (e) { console.error('更新交通失敗', e); }
       
+      // 更新 DOM 與最後時間
       document.getElementById('transport-list').innerHTML = html;
+      document.getElementById('update-time').textContent = `最後更新 ${formatTimeZeros(new Date())}`;
+    }
+
+    // --- 初始化及尋找車站 ID ---
+    async function autoFindStopIds() {
+      try {
+        const kmbAllStops = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop').then(r=>r.json()).then(j=>j.data);
+        for(let r of KMB_ROUTES) {
+          const apiDir = r.dir === 'O' ? 'outbound' : 'inbound';
+          const routeStops = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${r.route}/${apiDir}/1`).then(r=>r.json()).then(j=>j.data);
+          for(let rs of routeStops) {
+            const sInfo = kmbAllStops.find(s => s.stop === rs.stop);
+            if(sInfo && sInfo.name_tc.includes(MY_STOP_NAME)) {
+              kmbStopDict[r.route] = { stopId: rs.stop, stopName: sInfo.name_tc };
+              break;
+            }
+          }
+        }
+        
+        const nlbRoutes = await fetch('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list').then(r=>r.json()).then(j=>j.routes);
+        const b2pRoute = nlbRoutes.find(r => r.routeName_c === 'B2P');
+        if(b2pRoute) {
+          const nlbStops = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${b2pRoute.routeId}`).then(r=>r.json()).then(j=>j.stops);
+          const targetStop = nlbStops.find(s => s.stopName_c.includes(MY_STOP_NAME));
+          if(targetStop) nlbB2pInfo = { routeId: b2pRoute.routeId, stopId: targetStop.stopId, stopName: targetStop.stopName_c };
+        }
+        fetchAllTransport();
+      } catch(e) { console.error('尋找車站ID失敗', e); }
+    }
+
+    // --- 手動強制更新功能 ---
+    async function forceUpdate() {
+      const icon = document.getElementById('refresh-icon');
+      const timeText = document.getElementById('update-time');
+      
+      // 開啟旋轉動畫與提示
+      icon.classList.add('spin-anim');
+      timeText.textContent = '獲取最新資訊中...';
+      
+      try {
+        await Promise.all([fetchWeather(), fetchAllTransport()]);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        // 關閉旋轉動畫
+        setTimeout(() => icon.classList.remove('spin-anim'), 500);
+      }
     }
 
     // 啟動程式
     fetchWeather();
     autoFindStopIds();
-    setInterval(fetchAllTransport, 30000); 
-    setInterval(fetchWeather, 600000);     
+    setInterval(fetchAllTransport, 30000); // 交通每 30 秒自動更新
+    setInterval(fetchWeather, 600000);     // 天氣每 10 分鐘自動更新
   </script>
 </body>
 </html>
