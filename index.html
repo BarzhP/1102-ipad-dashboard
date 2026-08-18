@@ -22,7 +22,7 @@
     .card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; }
     
     /* Left Panel: Time & Weather */
-    .time-box { display: flex; align-items: baseline; gap: 15px; border-bottom: 2px dashed #ECEFF1; padding-bottom: 12px; margin-bottom: 16px; }
+    .time-box { display: flex; align-items: baseline; gap: 15px; border-bottom: 2px dashed #ECEFF1; padding-bottom: 12px; margin-bottom: 16px; flex-shrink: 0; }
     .time { font-size: 3.8rem; font-weight: 800; color: #1E293B; letter-spacing: -1px; }
     .date { font-size: 1.5rem; color: var(--text-sub); font-weight: 600; }
     
@@ -47,24 +47,29 @@
     .spin-anim { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    .transport-container { overflow-y: scroll; -webkit-overflow-scrolling: touch; padding-right: 5px; height: 100%; }
+    /* 全新 2 Column 網格佈局 */
+    .transport-container { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 5px; }
     .transport-container::-webkit-scrollbar { width: 6px; }
     .transport-container::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
     
-    .transit-item { background: #F8FAFC; border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #CBD5E1; }
+    .routes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding-bottom: 20px; }
+    
+    .transit-item { background: #F8FAFC; border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #CBD5E1; }
     .transit-item.mtr { border-color: var(--mtr-red); }
     .transit-item.lrt { border-color: var(--lrt-orange); }
     .transit-item.kmb { border-color: var(--kmb-red); }
     .transit-item.nlb { border-color: var(--nlb-blue); }
     
-    .transit-meta { display: flex; align-items: center; gap: 12px; }
-    .route-num { font-size: 1.4rem; font-weight: 800; min-width: 85px; text-align: center; white-space: nowrap; flex-shrink: 0; }
-    .route-dest { font-weight: 700; font-size: 1.1rem; }
-    .route-stop { font-size: 0.85rem; color: var(--text-sub); }
+    /* 縮窄後的文字防爆處理 */
+    .transit-meta { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+    .route-num { font-size: 1.3rem; font-weight: 800; min-width: 65px; text-align: center; white-space: nowrap; flex-shrink: 0; }
+    .route-info { display: flex; flex-direction: column; overflow: hidden; white-space: nowrap; }
+    .route-dest { font-weight: 700; font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; }
+    .route-stop { font-size: 0.8rem; color: var(--text-sub); overflow: hidden; text-overflow: ellipsis; }
     
-    .eta-box { text-align: right; min-width: 80px; }
-    .eta-min { font-size: 1.8rem; font-weight: 800; color: var(--green); }
-    .eta-next { font-size: 0.85rem; color: var(--text-sub); margin-top: 2px; }
+    .eta-box { text-align: right; min-width: 75px; flex-shrink: 0; margin-left: 5px; }
+    .eta-min { font-size: 1.6rem; font-weight: 800; color: var(--green); }
+    .eta-next { font-size: 0.8rem; color: var(--text-sub); margin-top: 2px; }
     .error-text { font-size: 1.05rem; color: #94A3B8; font-weight: 600; } 
   </style>
 </head>
@@ -121,22 +126,23 @@
         </button>
       </div>
 
-      <!-- 可捲動的交通列表 -->
-      <div class="transport-container" id="transport-list">
-         <!-- 卡片會喺度生成 -->
+      <!-- 可捲動的雙欄交通列表 -->
+      <div class="transport-container">
+         <div class="routes-grid" id="routes-container">
+            <!-- 卡片會喺度生成 -->
+         </div>
       </div>
     </div>
   </div>
 
   <script>
     // ==========================================
-    // 1. 用戶設定區 (升級版多站點引擎)
+    // 1. 用戶設定區 (多站點引擎)
     // ==========================================
     const MY_STOP_NAME = '天慈'; 
     const MTR_TML_STATION = 'TIS'; 
     const LRT_STATION = '435'; 
     
-    // 每一條九巴路線都可以設定專屬嘅 stopKw (搜尋關鍵字)
     const KMB_ROUTES = [
       { route: '276B', dir: 'O', dest: '上水', stopKw: '天慈' },
       { route: '269M', dir: 'O', dest: '祖堯', stopKw: '天慈' },
@@ -218,6 +224,7 @@
       return new Date(s);
     }
 
+    // 優化卡片 HTML 結構以配合雙欄防爆字設計
     function createCard(type, route, dest, stopName, eta1, eta2) {
       const primaryEta = eta1 || '目前無班次';
       const isNormal = primaryEta.includes('分鐘') || primaryEta.includes('到達');
@@ -226,7 +233,7 @@
         <div class="transit-item ${type}">
           <div class="transit-meta">
             <div class="route-num">${route}</div>
-            <div>
+            <div class="route-info">
               <div class="route-dest">往 ${dest}</div>
               <div class="route-stop">${stopName}</div>
             </div>
@@ -251,10 +258,10 @@
           const getEta = (arr, index) => arr && arr[index] && arr[index].ttnt ? arr[index].ttnt + ' 分鐘' : '';
           
           const up1 = getEta(tml.UP, 0); const up2 = getEta(tml.UP, 1);
-          html += createCard('mtr', '屯馬線', '烏溪沙', '天水圍站 (1號月台)', up1 || '尾班車已開出', up2);
+          html += createCard('mtr', '屯馬線', '烏溪沙', '1號月台', up1 || '尾班車已開出', up2);
           
           const dn1 = getEta(tml.DOWN, 0); const dn2 = getEta(tml.DOWN, 1);
-          html += createCard('mtr', '屯馬線', '屯門', '天水圍站 (2號月台)', dn1 || '尾班車已開出', dn2);
+          html += createCard('mtr', '屯馬線', '屯門', '2號月台', dn1 || '尾班車已開出', dn2);
         }
 
         // [2] 輕鐵
@@ -275,7 +282,7 @@
                 if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
                 return t.replace(/ mins?/gi, '') + ' 分鐘';
              };
-             html += createCard('lrt', g.route, g.dest, `天慈站 (月台 ${g.plat})`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
+             html += createCard('lrt', g.route, g.dest, `月台 ${g.plat}`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
           });
         }
 
@@ -293,8 +300,7 @@
               html += createCard('kmb', r.route, r.dest, info.stopName, '目前無班次', '');
             }
           } else {
-             // 如果未搵到站名，顯示預設關鍵字
-             html += createCard('kmb', r.route, r.dest, r.stopKw, '系統連線中...', '');
+             html += createCard('kmb', r.route, r.dest, r.stopKw, '連線中...', '');
           }
         }
 
@@ -323,13 +329,13 @@
             html += createCard('nlb', 'B2P', '深圳灣', info.stopName, '目前無班次', '');
           }
         } else {
-           html += createCard('nlb', 'B2P', '深圳灣', '天慈邨', '系統連線中...', '');
+           html += createCard('nlb', 'B2P', '深圳灣', '天慈邨', '連線中...', '');
         }
 
       } catch (e) { console.error('更新交通失敗', e); }
       
-      // 更新 DOM 與最後時間
-      document.getElementById('transport-list').innerHTML = html;
+      // 將資料注入專屬的雙欄 Grid 容器，唔會覆蓋頂部 Header
+      document.getElementById('routes-container').innerHTML = html;
       document.getElementById('update-time').textContent = `最後更新 ${formatTimeZeros(new Date())}`;
     }
 
@@ -343,7 +349,6 @@
           
           for(let rs of routeStops) {
             const sInfo = kmbAllStops.find(s => s.stop === rs.stop);
-            // 升級版：根據路線專屬嘅 stopKw 去配對站名
             if(sInfo && sInfo.name_tc.includes(r.stopKw)) {
               kmbStopDict[r.route] = { stopId: rs.stop, stopName: sInfo.name_tc };
               break;
