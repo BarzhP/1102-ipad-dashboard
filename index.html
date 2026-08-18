@@ -8,7 +8,6 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Smart Home Dashboard</title>
   <style>
-    /* 全局字體稍微收緊以配合一頁過顯示 */
     html { font-size: 105%; }
     
     :root {
@@ -18,10 +17,9 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
-    /* 緊湊嘅上下排列佈局，確保 100vh 內裝得晒 */
     body { background-color: var(--bg); color: var(--text-main); padding: 15px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; gap: 15px; }
     
-    /* 上部分：頂部控制台 (壓縮 Padding) */
+    /* 上部分：頂部控制台 */
     .top-panel { background: var(--card-bg); border-radius: var(--radius); padding: 18px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
     
     .time-area { display: flex; flex-direction: column; justify-content: center; }
@@ -33,7 +31,6 @@
     .temp-big { font-size: 4rem; font-weight: 800; color: #E67E22; line-height: 1; }
     .temp-details { display: flex; flex-direction: column; gap: 2px; }
     
-    /* 圖像化 濕度與降雨面板 */
     .metrics-area { display: flex; gap: 12px; }
     .metric-card { padding: 12px 18px; border-radius: 14px; display: flex; align-items: center; gap: 12px; min-width: 150px; }
     .metric-card.humidity { background: #E0F2FE; color: #0369A1; }
@@ -52,40 +49,35 @@
     .spin-anim { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    /* 分類標題樣式 (收緊 Margin) */
-    .category-title { font-size: 1.15rem; font-weight: 800; color: #334155; margin: 8px 0 6px 0; display: flex; align-items: center; gap: 6px; }
-    .category-title:first-child { margin-top: 0; }
+    /* 分類標題樣式 (增加組別距離) */
+    .category-title { font-size: 1.15rem; font-weight: 800; color: #334155; margin: 16px 0 8px 0; display: flex; align-items: center; gap: 6px; }
+    .category-title:first-child { margin-top: 4px; }
 
-    /* 零捲動核心：正方形多欄網格 */
-    .transport-container { flex: 1; overflow: hidden; /* 隱藏捲軸，一頁盡顯 */ }
+    .transport-container { flex: 1; overflow: hidden; }
     
-    /* 設定 grid-template-columns 確保一排可以容納 5-6 塊正方形 */
     .routes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; padding-bottom: 5px; }
     
-    /* 正方形卡片設計 */
-    .transit-item { background: #F8FAFC; border-radius: 14px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; border-top: 6px solid #CBD5E1; height: 125px; /* 固定高度確保排版不移位 */ box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+    /* 正方形卡片設計 (去除了灰色字，空間更集中) */
+    .transit-item { background: #F8FAFC; border-radius: 14px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; border-top: 6px solid #CBD5E1; height: 120px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
     
     .transit-item.mtr { border-top-color: var(--mtr-red); }
     .transit-item.lrt { border-top-color: var(--lrt-orange); }
     .transit-item.kmb { border-top-color: var(--kmb-red); }
     .transit-item.nlb { border-top-color: var(--nlb-blue); }
     
-    /* 卡片上中下結構 */
-    .sq-top { width: 100%; margin-bottom: auto; }
-    .route-num { font-size: 1.4rem; font-weight: 800; color: var(--text-main); line-height: 1.1; }
-    .route-stop { font-size: 0.75rem; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .sq-top { width: 100%; margin-top: 2px; }
+    .route-num { font-size: 1.45rem; font-weight: 800; color: var(--text-main); line-height: 1.1; }
     
-    .sq-mid { width: 100%; font-size: 1.05rem; font-weight: 700; color: #334155; margin: 4px 0; }
+    .sq-mid { width: 100%; font-size: 1.15rem; font-weight: 800; color: #1E293B; margin: auto 0; }
     
-    .sq-bot { width: 100%; margin-top: auto; }
+    .sq-bot { width: 100%; margin-bottom: 2px; }
     .eta-min { font-size: 1.45rem; font-weight: 800; color: var(--green); line-height: 1.1; }
-    .error-text { font-size: 1.05rem; color: #94A3B8; font-weight: 700; line-height: 1.1; padding: 2px 0;} 
+    .error-text { font-size: 1rem; color: #94A3B8; font-weight: 700; line-height: 1.1; padding: 2px 0;} 
     .eta-next { font-size: 0.75rem; color: var(--text-sub); margin-top: 3px; min-height: 12px; }
   </style>
 </head>
 <body>
   
-  <!-- 上部分：頂部控制台 -->
   <div class="top-panel">
     <div class="time-area">
       <div class="time" id="clock">00:00</div>
@@ -121,7 +113,6 @@
     </div>
   </div>
 
-  <!-- 下部分：交通實時到站 -->
   <div class="bottom-panel">
     <div class="section-header">
       <div>
@@ -133,22 +124,18 @@
       </button>
     </div>
 
-    <!-- 零捲動正方形容器 -->
     <div class="transport-container" id="routes-container">
-      <!-- HTML 會喺度動態生成 -->
+      <!-- 動態生成 -->
     </div>
   </div>
 
   <script>
-    // ==========================================
-    // 1. 用戶設定區 (多站點引擎)
-    // ==========================================
     const MY_STOP_NAME = '天慈'; 
     const MTR_TML_STATION = 'TIS'; 
     const LRT_STATION = '435'; 
     
     const LRT_EXPECTED_ROUTES = [
-      { route: '705', dest: '天水圍循環' }, // 精簡字眼以配合正方形
+      { route: '705', dest: '天水圍循環' },
       { route: '706', dest: '天水圍循環' },
       { route: '751', dest: '天逸' },
       { route: '751', dest: '友愛' }
@@ -166,7 +153,6 @@
     let kmbStopDict = {}; 
     let nlbB2pInfo = null;
 
-    // --- 時間系統 ---
     function formatTimeZeros(nowObj) {
       const h = nowObj.getHours().toString().padStart(2, '0');
       const m = nowObj.getMinutes().toString().padStart(2, '0');
@@ -181,7 +167,6 @@
     }
     setInterval(updateClock, 1000); updateClock();
 
-    // --- 天氣系統 ---
     async function fetchWeather() {
       try {
         const rhrRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc').then(r=>r.json());
@@ -226,7 +211,6 @@
       } catch (e) { console.error('天氣API錯誤', e); }
     }
 
-    // --- 交通系統核心 ---
     function parseSafeDate(dateStr) {
       if(!dateStr) return new Date();
       let s = dateStr.replace(/-/g, '/');
@@ -235,8 +219,8 @@
       return new Date(s);
     }
 
-    // 全新正方形卡片生成器
-    function createCard(type, route, dest, stopName, eta1, eta2) {
+    // 正方形卡片：無「往」字、無灰色站名月台
+    function createCard(type, route, dest, eta1, eta2) {
       let primaryEta = eta1 || '暫無班次';
       if (primaryEta === '目前無班次') primaryEta = '暫無班次';
       if (primaryEta === '尾班車已開出') primaryEta = '尾班車已開';
@@ -247,9 +231,8 @@
         <div class="transit-item ${type}">
           <div class="sq-top">
             <div class="route-num">${route}</div>
-            <div class="route-stop">${stopName}</div>
           </div>
-          <div class="sq-mid">往 ${dest}</div>
+          <div class="sq-mid">${dest}</div>
           <div class="sq-bot">
             ${isNormal ? `<div class="eta-min">${primaryEta}</div>` : `<div class="error-text">${primaryEta}</div>`}
             ${eta2 && isNormal ? `<div class="eta-next">下班: ${eta2}</div>` : `<div class="eta-next">&nbsp;</div>`}
@@ -259,24 +242,24 @@
     }
 
     async function fetchAllTransport() {
-      let tmlHtml = ''; let lrtHtml = ''; let busHtml = '';
+      let railHtml = ''; let busHtml = '';
       const now = new Date();
 
       try {
-        // [1] 屯馬線
+        // [1] 屯馬線 (歸入軌道交通)
         const mtrRes = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=TML&sta=${MTR_TML_STATION}`).then(r=>r.json());
         if (mtrRes.data && mtrRes.data[`TML-${MTR_TML_STATION}`]) {
           const tml = mtrRes.data[`TML-${MTR_TML_STATION}`];
           const getEta = (arr, index) => arr && arr[index] && arr[index].ttnt ? arr[index].ttnt + ' 分鐘' : '';
           
           const up1 = getEta(tml.UP, 0); const up2 = getEta(tml.UP, 1);
-          tmlHtml += createCard('mtr', '屯馬線', '烏溪沙', '1號月台', up1 || '尾班車已開', up2);
+          railHtml += createCard('mtr', '屯馬線', '烏溪沙', up1 || '尾班車已開', up2);
           
           const dn1 = getEta(tml.DOWN, 0); const dn2 = getEta(tml.DOWN, 1);
-          tmlHtml += createCard('mtr', '屯馬線', '屯門', '2號月台', dn1 || '尾班車已開', dn2);
+          railHtml += createCard('mtr', '屯馬線', '屯門', dn1 || '尾班車已開', dn2);
         }
 
-        // [2] 輕鐵
+        // [2] 輕鐵 (歸入軌道交通，與屯馬線放同一行)
         const lrtRes = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${LRT_STATION}`).then(r=>r.json());
         let lrtDataMap = {};
         
@@ -285,9 +268,9 @@
             if(plat.route_list) {
               plat.route_list.forEach(train => {
                  let destName = train.dest_ch;
-                 if (destName.includes('循環')) destName = '天水圍循環'; // 精簡站名
+                 if (destName.includes('循環')) destName = '天水圍循環';
                  const key = `${train.route_no}-${destName}`;
-                 if(!lrtDataMap[key]) lrtDataMap[key] = { route: train.route_no, dest: destName, plat: plat.platform_id, times: [] };
+                 if(!lrtDataMap[key]) lrtDataMap[key] = { route: train.route_no, dest: destName, times: [] };
                  lrtDataMap[key].times.push(train.time_en);
               });
             }
@@ -302,10 +285,10 @@
                  if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
                  return t.replace(/ mins?/gi, '') + ' 分鐘';
               };
-              lrtHtml += createCard('lrt', g.route, g.dest, `月台 ${g.plat}`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
+              railHtml += createCard('lrt', g.route, g.dest, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
               delete lrtDataMap[key]; 
            } else {
-              lrtHtml += createCard('lrt', ex.route, ex.dest, '天慈站', '暫無班次', '');
+              railHtml += createCard('lrt', ex.route, ex.dest, '暫無班次', '');
            }
         });
         
@@ -314,7 +297,7 @@
               if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
               return t.replace(/ mins?/gi, '') + ' 分鐘';
            };
-           lrtHtml += createCard('lrt', g.route, g.dest, `月台 ${g.plat}`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
+           railHtml += createCard('lrt', g.route, g.dest, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
         });
 
         // [3] KMB 九巴
@@ -326,17 +309,17 @@
             const etas = validEtas.map(etaStr => Math.max(0, Math.floor((parseSafeDate(etaStr) - now) / 60000)));
             
             if(etas.length > 0) {
-              busHtml += createCard('kmb', r.route, r.dest, info.stopName, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
+              busHtml += createCard('kmb', r.route, r.dest, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
             } else {
-              busHtml += createCard('kmb', r.route, r.dest, info.stopName, '暫無班次', '');
+              busHtml += createCard('kmb', r.route, r.dest, '暫無班次', '');
             }
           } else {
-             busHtml += createCard('kmb', r.route, r.dest, r.stopKw, '連線中...', '');
+             busHtml += createCard('kmb', r.route, r.dest, '連線中...', '');
           }
         }
 
         // [4] K73 港鐵巴士
-        let k73Card = createCard('mtr', 'K73', '元朗西', '天慈邨', '暫無班次', '');
+        let k73Card = createCard('mtr', 'K73', '元朗西', '暫無班次', '');
         const mtrbRes = await fetch('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', {
           method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({language: "zh", routeName: "K73"})
         }).then(r=>r.json());
@@ -344,7 +327,7 @@
           const targetStop = mtrbRes.busStop.find(s => s.busStopName.includes(MY_STOP_NAME));
           if(targetStop && targetStop.bus && targetStop.bus.length > 0) {
             const e1 = targetStop.bus[0].departureTimeInMinute; const e2 = targetStop.bus[1]?.departureTimeInMinute;
-            k73Card = createCard('mtr', 'K73', '元朗西', targetStop.busStopName, e1==='0'?'即將到達':e1+' 分鐘', e2?(e2==='0'?'即將到達':e2+' 分鐘'):'');
+            k73Card = createCard('mtr', 'K73', '元朗西', e1==='0'?'即將到達':e1+' 分鐘', e2?(e2==='0'?'即將到達':e2+' 分鐘'):'');
           }
         }
         busHtml += k73Card;
@@ -355,26 +338,24 @@
           const nlbRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop-eta.php?action=eta&routeId=${info.routeId}&stopId=${info.stopId}&language=zh`).then(r=>r.json());
           if(nlbRes.estimatedArrivals && nlbRes.estimatedArrivals.length > 0) {
             const etas = nlbRes.estimatedArrivals.map(e => Math.max(0, Math.floor((parseSafeDate(e.estimatedArrivalTime) - now) / 60000)));
-            busHtml += createCard('nlb', 'B2P', '深圳灣', info.stopName, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
+            busHtml += createCard('nlb', 'B2P', '深圳灣', etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
           } else {
-            busHtml += createCard('nlb', 'B2P', '深圳灣', info.stopName, '暫無班次', '');
+            busHtml += createCard('nlb', 'B2P', '深圳灣', '暫無班次', '');
           }
         } else {
-           busHtml += createCard('nlb', 'B2P', '深圳灣', '天慈邨', '連線中...', '');
+           busHtml += createCard('nlb', 'B2P', '深圳灣', '連線中...', '');
         }
 
       } catch (e) { console.error('更新交通失敗', e); }
       
       let finalHtml = '';
-      if(tmlHtml) finalHtml += `<div class="category-title">🚇 屯馬線</div><div class="routes-grid">${tmlHtml}</div>`;
-      if(lrtHtml) finalHtml += `<div class="category-title">🚈 輕鐵 (天慈站)</div><div class="routes-grid">${lrtHtml}</div>`;
+      if(railHtml) finalHtml += `<div class="category-title">🚇 鐵路交通 (屯馬線 & 輕鐵)</div><div class="routes-grid">${railHtml}</div>`;
       if(busHtml) finalHtml += `<div class="category-title">🚌 巴士路線</div><div class="routes-grid">${busHtml}</div>`;
       
       document.getElementById('routes-container').innerHTML = finalHtml;
       document.getElementById('update-time').textContent = `最後更新 ${formatTimeZeros(new Date())}`;
     }
 
-    // --- 初始化及尋找車站 ID ---
     async function autoFindStopIds() {
       try {
         const kmbAllStops = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop').then(r=>r.json()).then(j=>j.data);
@@ -402,7 +383,6 @@
       } catch(e) { console.error('尋找車站ID失敗', e); }
     }
 
-    // --- 手動強制更新功能 ---
     async function forceUpdate() {
       const icon = document.getElementById('refresh-icon');
       const timeText = document.getElementById('update-time');
