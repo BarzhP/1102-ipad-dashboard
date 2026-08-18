@@ -8,102 +8,101 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Smart Home Dashboard</title>
   <style>
-    /* 全局字體放大 10% */
-    html { font-size: 110%; }
+    /* 全局字體稍微收緊以配合一頁過顯示 */
+    html { font-size: 105%; }
     
     :root {
       --bg: #F4F6F9; --card-bg: #FFFFFF; --text-main: #2C3E50; --text-sub: #7F8C8D;
       --kmb-red: #E3002B; --mtr-red: #92062C; --lrt-orange: #D35400; --nlb-blue: #2980B9;
-      --green: #27AE60; --primary: #3498DB; --radius: 20px;
+      --green: #27AE60; --primary: #3498DB; --radius: 18px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
-    /* 上下排列佈局 */
-    body { background-color: var(--bg); color: var(--text-main); padding: 20px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; gap: 20px; }
+    /* 緊湊嘅上下排列佈局，確保 100vh 內裝得晒 */
+    body { background-color: var(--bg); color: var(--text-main); padding: 15px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; gap: 15px; }
     
-    /* 上部分：頂部控制台 */
-    .top-panel { background: var(--card-bg); border-radius: var(--radius); padding: 24px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    /* 上部分：頂部控制台 (壓縮 Padding) */
+    .top-panel { background: var(--card-bg); border-radius: var(--radius); padding: 18px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
     
     .time-area { display: flex; flex-direction: column; justify-content: center; }
-    .time { font-size: 4.5rem; font-weight: 800; color: #1E293B; letter-spacing: -1px; line-height: 1.1; }
-    .date { font-size: 1.4rem; color: var(--text-sub); font-weight: 600; padding-left: 5px; }
+    .time { font-size: 4.2rem; font-weight: 800; color: #1E293B; letter-spacing: -1px; line-height: 1.1; }
+    .date { font-size: 1.3rem; color: var(--text-sub); font-weight: 600; padding-left: 5px; }
     
-    .weather-area { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; flex: 1; border-left: 2px dashed #ECEFF1; border-right: 2px dashed #ECEFF1; margin: 0 30px; padding: 0 20px; }
-    .weather-main { display: flex; align-items: center; gap: 18px; }
-    .temp-big { font-size: 4.5rem; font-weight: 800; color: #E67E22; line-height: 1; }
-    .temp-details { display: flex; flex-direction: column; gap: 4px; }
+    .weather-area { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; flex: 1; border-left: 2px dashed #ECEFF1; border-right: 2px dashed #ECEFF1; margin: 0 20px; padding: 0 15px; }
+    .weather-main { display: flex; align-items: center; gap: 15px; }
+    .temp-big { font-size: 4rem; font-weight: 800; color: #E67E22; line-height: 1; }
+    .temp-details { display: flex; flex-direction: column; gap: 2px; }
     
     /* 圖像化 濕度與降雨面板 */
-    .metrics-area { display: flex; gap: 15px; }
-    .metric-card { padding: 16px 22px; border-radius: 16px; display: flex; align-items: center; gap: 15px; min-width: 170px; }
+    .metrics-area { display: flex; gap: 12px; }
+    .metric-card { padding: 12px 18px; border-radius: 14px; display: flex; align-items: center; gap: 12px; min-width: 150px; }
     .metric-card.humidity { background: #E0F2FE; color: #0369A1; }
     .metric-card.rain { background: #F3E8FF; color: #6B21A8; }
-    .metric-icon { font-size: 2.6rem; }
+    .metric-icon { font-size: 2.2rem; }
     .metric-info { display: flex; flex-direction: column; }
-    .metric-label { font-size: 0.95rem; font-weight: 700; opacity: 0.85; }
-    .metric-value { font-size: 1.7rem; font-weight: 800; line-height: 1.2; }
+    .metric-label { font-size: 0.9rem; font-weight: 700; opacity: 0.85; }
+    .metric-value { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
 
     /* 下部分：交通實時到站 */
-    .bottom-panel { background: var(--card-bg); border-radius: var(--radius); padding: 24px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .bottom-panel { background: var(--card-bg); border-radius: var(--radius); padding: 18px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     
-    .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #ECEFF1; padding-bottom: 15px; margin-bottom: 10px; flex-shrink: 0; }
-    .update-btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 25px; font-size: 1.1rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(52,152,219,0.3); transition: opacity 0.2s; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #ECEFF1; padding-bottom: 12px; margin-bottom: 5px; flex-shrink: 0; }
+    .update-btn { background: var(--primary); color: white; border: none; padding: 8px 18px; border-radius: 20px; font-size: 1.05rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(52,152,219,0.3); transition: opacity 0.2s; }
     .update-btn:active { opacity: 0.7; }
     .spin-anim { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    /* 分類標題樣式 */
-    .category-title { font-size: 1.25rem; font-weight: 800; color: #334155; margin: 18px 0 12px 0; display: flex; align-items: center; gap: 8px; }
-    .category-title:first-child { margin-top: 5px; }
+    /* 分類標題樣式 (收緊 Margin) */
+    .category-title { font-size: 1.15rem; font-weight: 800; color: #334155; margin: 8px 0 6px 0; display: flex; align-items: center; gap: 6px; }
+    .category-title:first-child { margin-top: 0; }
 
-    /* iPad 3 欄式網格佈局 */
-    .transport-container { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 5px; }
-    .transport-container::-webkit-scrollbar { width: 8px; }
-    .transport-container::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    /* 零捲動核心：正方形多欄網格 */
+    .transport-container { flex: 1; overflow: hidden; /* 隱藏捲軸，一頁盡顯 */ }
     
-    .routes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 15px; padding-bottom: 5px; }
+    /* 設定 grid-template-columns 確保一排可以容納 5-6 塊正方形 */
+    .routes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; padding-bottom: 5px; }
     
-    .transit-item { background: #F8FAFC; border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #CBD5E1; }
-    .transit-item.mtr { border-color: var(--mtr-red); }
-    .transit-item.lrt { border-color: var(--lrt-orange); }
-    .transit-item.kmb { border-color: var(--kmb-red); }
-    .transit-item.nlb { border-color: var(--nlb-blue); }
+    /* 正方形卡片設計 */
+    .transit-item { background: #F8FAFC; border-radius: 14px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; border-top: 6px solid #CBD5E1; height: 125px; /* 固定高度確保排版不移位 */ box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
     
-    .transit-meta { display: flex; align-items: center; gap: 12px; overflow: hidden; }
-    .route-num { font-size: 1.5rem; font-weight: 800; min-width: 65px; text-align: center; white-space: nowrap; flex-shrink: 0; }
-    .route-info { display: flex; flex-direction: column; overflow: hidden; white-space: nowrap; }
-    .route-dest { font-weight: 700; font-size: 1.15rem; overflow: hidden; text-overflow: ellipsis; }
-    .route-stop { font-size: 0.9rem; color: var(--text-sub); overflow: hidden; text-overflow: ellipsis; }
+    .transit-item.mtr { border-top-color: var(--mtr-red); }
+    .transit-item.lrt { border-top-color: var(--lrt-orange); }
+    .transit-item.kmb { border-top-color: var(--kmb-red); }
+    .transit-item.nlb { border-top-color: var(--nlb-blue); }
     
-    .eta-box { text-align: right; min-width: 80px; flex-shrink: 0; margin-left: 8px; }
-    .eta-min { font-size: 1.7rem; font-weight: 800; color: var(--green); line-height: 1.1; }
-    .eta-next { font-size: 0.85rem; color: var(--text-sub); margin-top: 4px; }
-    .error-text { font-size: 1.1rem; color: #94A3B8; font-weight: 600; } 
+    /* 卡片上中下結構 */
+    .sq-top { width: 100%; margin-bottom: auto; }
+    .route-num { font-size: 1.4rem; font-weight: 800; color: var(--text-main); line-height: 1.1; }
+    .route-stop { font-size: 0.75rem; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    
+    .sq-mid { width: 100%; font-size: 1.05rem; font-weight: 700; color: #334155; margin: 4px 0; }
+    
+    .sq-bot { width: 100%; margin-top: auto; }
+    .eta-min { font-size: 1.45rem; font-weight: 800; color: var(--green); line-height: 1.1; }
+    .error-text { font-size: 1.05rem; color: #94A3B8; font-weight: 700; line-height: 1.1; padding: 2px 0;} 
+    .eta-next { font-size: 0.75rem; color: var(--text-sub); margin-top: 3px; min-height: 12px; }
   </style>
 </head>
 <body>
   
   <!-- 上部分：頂部控制台 -->
   <div class="top-panel">
-    <!-- 1. 時間與日期 -->
     <div class="time-area">
       <div class="time" id="clock">00:00</div>
       <div class="date" id="date-str">--月--日</div>
     </div>
     
-    <!-- 2. 天氣與信號 -->
     <div class="weather-area">
       <div id="warning-container" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
       <div class="weather-main">
         <div class="temp-big" id="current-temp">--°</div>
         <div class="temp-details">
-          <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-sub);">天水圍天氣</div>
-          <div style="font-size: 1.15rem; font-weight: 700;" id="forecast-range">預測: --° ~ --°</div>
+          <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-sub);">天水圍天氣</div>
+          <div style="font-size: 1.1rem; font-weight: 700;" id="forecast-range">預測: --° ~ --°</div>
         </div>
       </div>
     </div>
     
-    <!-- 3. 濕度與降雨概率 -->
     <div class="metrics-area">
       <div class="metric-card humidity">
         <span class="metric-icon">💧</span>
@@ -126,16 +125,15 @@
   <div class="bottom-panel">
     <div class="section-header">
       <div>
-        <!-- 標題已更新為「下班車資訊」 -->
         <div style="font-size: 1.3rem; font-weight: 800; color: var(--text-sub);">下班車資訊</div>
-        <div id="update-time" style="font-size: 1rem; font-weight: 600; color: #94A3B8; margin-top: 4px;">初始化系統中...</div>
+        <div id="update-time" style="font-size: 0.95rem; font-weight: 600; color: #94A3B8; margin-top: 2px;">初始化系統中...</div>
       </div>
       <button class="update-btn" onclick="forceUpdate()">
         <span id="refresh-icon">🔄</span> 手動更新
       </button>
     </div>
 
-    <!-- 支援分類顯示的容器 -->
+    <!-- 零捲動正方形容器 -->
     <div class="transport-container" id="routes-container">
       <!-- HTML 會喺度動態生成 -->
     </div>
@@ -149,10 +147,9 @@
     const MTR_TML_STATION = 'TIS'; 
     const LRT_STATION = '435'; 
     
-    // 天慈站輕鐵常駐路線 (加入 705)
     const LRT_EXPECTED_ROUTES = [
-      { route: '705', dest: '天水圍循環線' },
-      { route: '706', dest: '天水圍循環線' },
+      { route: '705', dest: '天水圍循環' }, // 精簡字眼以配合正方形
+      { route: '706', dest: '天水圍循環' },
       { route: '751', dest: '天逸' },
       { route: '751', dest: '友愛' }
     ];
@@ -184,7 +181,7 @@
     }
     setInterval(updateClock, 1000); updateClock();
 
-    // --- 天氣及警告信號系統 ---
+    // --- 天氣系統 ---
     async function fetchWeather() {
       try {
         const rhrRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc').then(r=>r.json());
@@ -203,7 +200,7 @@
                else if (name.includes('號信號')) { bg = '#34495E'; icon = '🌀'; }
                else if (name.includes('季候風')) { bg = '#16A085'; icon = '💨'; }
 
-               warnHtml += `<div style="background: ${bg}; color: ${textColor}; padding: 8px 16px; border-radius: 10px; font-weight: 800; font-size: 1.15rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);"><span>${icon}</span><span>${name}</span></div>`;
+               warnHtml += `<div style="background: ${bg}; color: ${textColor}; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);"><span>${icon}</span><span>${name}</span></div>`;
            });
            warnContainer.innerHTML = warnHtml;
         } else {
@@ -238,33 +235,31 @@
       return new Date(s);
     }
 
+    // 全新正方形卡片生成器
     function createCard(type, route, dest, stopName, eta1, eta2) {
-      const primaryEta = eta1 || '目前無班次';
+      let primaryEta = eta1 || '暫無班次';
+      if (primaryEta === '目前無班次') primaryEta = '暫無班次';
+      if (primaryEta === '尾班車已開出') primaryEta = '尾班車已開';
+
       const isNormal = primaryEta.includes('分鐘') || primaryEta.includes('到達');
       
       return `
         <div class="transit-item ${type}">
-          <div class="transit-meta">
+          <div class="sq-top">
             <div class="route-num">${route}</div>
-            <div class="route-info">
-              <div class="route-dest">往 ${dest}</div>
-              <div class="route-stop">${stopName}</div>
-            </div>
+            <div class="route-stop">${stopName}</div>
           </div>
-          <div class="eta-box">
+          <div class="sq-mid">往 ${dest}</div>
+          <div class="sq-bot">
             ${isNormal ? `<div class="eta-min">${primaryEta}</div>` : `<div class="error-text">${primaryEta}</div>`}
-            ${eta2 && isNormal ? `<div class="eta-next">下班: ${eta2}</div>` : ''}
+            ${eta2 && isNormal ? `<div class="eta-next">下班: ${eta2}</div>` : `<div class="eta-next">&nbsp;</div>`}
           </div>
         </div>
       `;
     }
 
     async function fetchAllTransport() {
-      // 設立三個分類的 HTML 變數
-      let tmlHtml = '';
-      let lrtHtml = '';
-      let busHtml = '';
-      
+      let tmlHtml = ''; let lrtHtml = ''; let busHtml = '';
       const now = new Date();
 
       try {
@@ -275,10 +270,10 @@
           const getEta = (arr, index) => arr && arr[index] && arr[index].ttnt ? arr[index].ttnt + ' 分鐘' : '';
           
           const up1 = getEta(tml.UP, 0); const up2 = getEta(tml.UP, 1);
-          tmlHtml += createCard('mtr', '屯馬線', '烏溪沙', '1號月台', up1 || '尾班車已開出', up2);
+          tmlHtml += createCard('mtr', '屯馬線', '烏溪沙', '1號月台', up1 || '尾班車已開', up2);
           
           const dn1 = getEta(tml.DOWN, 0); const dn2 = getEta(tml.DOWN, 1);
-          tmlHtml += createCard('mtr', '屯馬線', '屯門', '2號月台', dn1 || '尾班車已開出', dn2);
+          tmlHtml += createCard('mtr', '屯馬線', '屯門', '2號月台', dn1 || '尾班車已開', dn2);
         }
 
         // [2] 輕鐵
@@ -289,8 +284,10 @@
           lrtRes.platform_list.forEach(plat => {
             if(plat.route_list) {
               plat.route_list.forEach(train => {
-                 const key = `${train.route_no}-${train.dest_ch}`;
-                 if(!lrtDataMap[key]) lrtDataMap[key] = { route: train.route_no, dest: train.dest_ch, plat: plat.platform_id, times: [] };
+                 let destName = train.dest_ch;
+                 if (destName.includes('循環')) destName = '天水圍循環'; // 精簡站名
+                 const key = `${train.route_no}-${destName}`;
+                 if(!lrtDataMap[key]) lrtDataMap[key] = { route: train.route_no, dest: destName, plat: plat.platform_id, times: [] };
                  lrtDataMap[key].times.push(train.time_en);
               });
             }
@@ -308,7 +305,7 @@
               lrtHtml += createCard('lrt', g.route, g.dest, `月台 ${g.plat}`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
               delete lrtDataMap[key]; 
            } else {
-              lrtHtml += createCard('lrt', ex.route, ex.dest, '天慈站', '目前無班次', '');
+              lrtHtml += createCard('lrt', ex.route, ex.dest, '天慈站', '暫無班次', '');
            }
         });
         
@@ -331,7 +328,7 @@
             if(etas.length > 0) {
               busHtml += createCard('kmb', r.route, r.dest, info.stopName, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
             } else {
-              busHtml += createCard('kmb', r.route, r.dest, info.stopName, '目前無班次', '');
+              busHtml += createCard('kmb', r.route, r.dest, info.stopName, '暫無班次', '');
             }
           } else {
              busHtml += createCard('kmb', r.route, r.dest, r.stopKw, '連線中...', '');
@@ -339,7 +336,7 @@
         }
 
         // [4] K73 港鐵巴士
-        let k73Card = createCard('mtr', 'K73', '元朗西', '天慈邨', '目前無班次', '');
+        let k73Card = createCard('mtr', 'K73', '元朗西', '天慈邨', '暫無班次', '');
         const mtrbRes = await fetch('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', {
           method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({language: "zh", routeName: "K73"})
         }).then(r=>r.json());
@@ -360,7 +357,7 @@
             const etas = nlbRes.estimatedArrivals.map(e => Math.max(0, Math.floor((parseSafeDate(e.estimatedArrivalTime) - now) / 60000)));
             busHtml += createCard('nlb', 'B2P', '深圳灣', info.stopName, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
           } else {
-            busHtml += createCard('nlb', 'B2P', '深圳灣', info.stopName, '目前無班次', '');
+            busHtml += createCard('nlb', 'B2P', '深圳灣', info.stopName, '暫無班次', '');
           }
         } else {
            busHtml += createCard('nlb', 'B2P', '深圳灣', '天慈邨', '連線中...', '');
@@ -368,7 +365,6 @@
 
       } catch (e) { console.error('更新交通失敗', e); }
       
-      // 將三組 HTML 合併，加入分類標題
       let finalHtml = '';
       if(tmlHtml) finalHtml += `<div class="category-title">🚇 屯馬線</div><div class="routes-grid">${tmlHtml}</div>`;
       if(lrtHtml) finalHtml += `<div class="category-title">🚈 輕鐵 (天慈站)</div><div class="routes-grid">${lrtHtml}</div>`;
@@ -423,7 +419,6 @@
       }
     }
 
-    // 啟動程式
     fetchWeather();
     autoFindStopIds();
     setInterval(fetchAllTransport, 30000); 
