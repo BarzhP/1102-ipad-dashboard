@@ -46,18 +46,22 @@
     /* 下部分：交通實時到站 */
     .bottom-panel { background: var(--card-bg); border-radius: var(--radius); padding: 24px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
     
-    .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #ECEFF1; padding-bottom: 15px; margin-bottom: 15px; flex-shrink: 0; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #ECEFF1; padding-bottom: 15px; margin-bottom: 10px; flex-shrink: 0; }
     .update-btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 25px; font-size: 1.1rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(52,152,219,0.3); transition: opacity 0.2s; }
     .update-btn:active { opacity: 0.7; }
     .spin-anim { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* 分類標題樣式 */
+    .category-title { font-size: 1.25rem; font-weight: 800; color: #334155; margin: 18px 0 12px 0; display: flex; align-items: center; gap: 8px; }
+    .category-title:first-child { margin-top: 5px; }
 
     /* iPad 3 欄式網格佈局 */
     .transport-container { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 5px; }
     .transport-container::-webkit-scrollbar { width: 8px; }
     .transport-container::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
     
-    .routes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 18px; padding-bottom: 20px; }
+    .routes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 15px; padding-bottom: 5px; }
     
     .transit-item { background: #F8FAFC; border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #CBD5E1; }
     .transit-item.mtr { border-color: var(--mtr-red); }
@@ -122,7 +126,8 @@
   <div class="bottom-panel">
     <div class="section-header">
       <div>
-        <div style="font-size: 1.3rem; font-weight: 800; color: var(--text-sub);">實時交通狀態</div>
+        <!-- 標題已更新為「下班車資訊」 -->
+        <div style="font-size: 1.3rem; font-weight: 800; color: var(--text-sub);">下班車資訊</div>
         <div id="update-time" style="font-size: 1rem; font-weight: 600; color: #94A3B8; margin-top: 4px;">初始化系統中...</div>
       </div>
       <button class="update-btn" onclick="forceUpdate()">
@@ -130,11 +135,9 @@
       </button>
     </div>
 
-    <!-- 可捲動的 3 欄交通列表 -->
-    <div class="transport-container">
-       <div class="routes-grid" id="routes-container">
-          <!-- 卡片會喺度生成 -->
-       </div>
+    <!-- 支援分類顯示的容器 -->
+    <div class="transport-container" id="routes-container">
+      <!-- HTML 會喺度動態生成 -->
     </div>
   </div>
 
@@ -146,8 +149,9 @@
     const MTR_TML_STATION = 'TIS'; 
     const LRT_STATION = '435'; 
     
-    // 天慈站輕鐵常駐路線 (防止深夜無車時卡片消失)
+    // 天慈站輕鐵常駐路線 (加入 705)
     const LRT_EXPECTED_ROUTES = [
+      { route: '705', dest: '天水圍循環線' },
       { route: '706', dest: '天水圍循環線' },
       { route: '751', dest: '天逸' },
       { route: '751', dest: '友愛' }
@@ -256,7 +260,11 @@
     }
 
     async function fetchAllTransport() {
-      let html = '';
+      // 設立三個分類的 HTML 變數
+      let tmlHtml = '';
+      let lrtHtml = '';
+      let busHtml = '';
+      
       const now = new Date();
 
       try {
@@ -267,13 +275,13 @@
           const getEta = (arr, index) => arr && arr[index] && arr[index].ttnt ? arr[index].ttnt + ' 分鐘' : '';
           
           const up1 = getEta(tml.UP, 0); const up2 = getEta(tml.UP, 1);
-          html += createCard('mtr', '屯馬線', '烏溪沙', '1號月台', up1 || '尾班車已開出', up2);
+          tmlHtml += createCard('mtr', '屯馬線', '烏溪沙', '1號月台', up1 || '尾班車已開出', up2);
           
           const dn1 = getEta(tml.DOWN, 0); const dn2 = getEta(tml.DOWN, 1);
-          html += createCard('mtr', '屯馬線', '屯門', '2號月台', dn1 || '尾班車已開出', dn2);
+          tmlHtml += createCard('mtr', '屯馬線', '屯門', '2號月台', dn1 || '尾班車已開出', dn2);
         }
 
-        // [2] 輕鐵 (加入常駐路線保護機制)
+        // [2] 輕鐵
         const lrtRes = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${LRT_STATION}`).then(r=>r.json());
         let lrtDataMap = {};
         
@@ -289,7 +297,6 @@
           });
         }
         
-        // 渲染常駐輕鐵路線
         LRT_EXPECTED_ROUTES.forEach(ex => {
            const key = `${ex.route}-${ex.dest}`;
            if(lrtDataMap[key]) {
@@ -298,20 +305,19 @@
                  if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
                  return t.replace(/ mins?/gi, '') + ' 分鐘';
               };
-              html += createCard('lrt', g.route, g.dest, `月台 ${g.plat}`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
-              delete lrtDataMap[key]; // 渲染完就刪除
+              lrtHtml += createCard('lrt', g.route, g.dest, `月台 ${g.plat}`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
+              delete lrtDataMap[key]; 
            } else {
-              html += createCard('lrt', ex.route, ex.dest, '天慈站', '目前無班次', '');
+              lrtHtml += createCard('lrt', ex.route, ex.dest, '天慈站', '目前無班次', '');
            }
         });
         
-        // 渲染其他非常規路線 (如 751P)
         Object.values(lrtDataMap).forEach(g => {
            const formatTime = (t) => {
               if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
               return t.replace(/ mins?/gi, '') + ' 分鐘';
            };
-           html += createCard('lrt', g.route, g.dest, `月台 ${g.plat}`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
+           lrtHtml += createCard('lrt', g.route, g.dest, `月台 ${g.plat}`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
         });
 
         // [3] KMB 九巴
@@ -323,12 +329,12 @@
             const etas = validEtas.map(etaStr => Math.max(0, Math.floor((parseSafeDate(etaStr) - now) / 60000)));
             
             if(etas.length > 0) {
-              html += createCard('kmb', r.route, r.dest, info.stopName, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
+              busHtml += createCard('kmb', r.route, r.dest, info.stopName, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
             } else {
-              html += createCard('kmb', r.route, r.dest, info.stopName, '目前無班次', '');
+              busHtml += createCard('kmb', r.route, r.dest, info.stopName, '目前無班次', '');
             }
           } else {
-             html += createCard('kmb', r.route, r.dest, r.stopKw, '連線中...', '');
+             busHtml += createCard('kmb', r.route, r.dest, r.stopKw, '連線中...', '');
           }
         }
 
@@ -344,7 +350,7 @@
             k73Card = createCard('mtr', 'K73', '元朗西', targetStop.busStopName, e1==='0'?'即將到達':e1+' 分鐘', e2?(e2==='0'?'即將到達':e2+' 分鐘'):'');
           }
         }
-        html += k73Card;
+        busHtml += k73Card;
 
         // [5] B2P 新大嶼山巴士
         if(nlbB2pInfo) {
@@ -352,17 +358,23 @@
           const nlbRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop-eta.php?action=eta&routeId=${info.routeId}&stopId=${info.stopId}&language=zh`).then(r=>r.json());
           if(nlbRes.estimatedArrivals && nlbRes.estimatedArrivals.length > 0) {
             const etas = nlbRes.estimatedArrivals.map(e => Math.max(0, Math.floor((parseSafeDate(e.estimatedArrivalTime) - now) / 60000)));
-            html += createCard('nlb', 'B2P', '深圳灣', info.stopName, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
+            busHtml += createCard('nlb', 'B2P', '深圳灣', info.stopName, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
           } else {
-            html += createCard('nlb', 'B2P', '深圳灣', info.stopName, '目前無班次', '');
+            busHtml += createCard('nlb', 'B2P', '深圳灣', info.stopName, '目前無班次', '');
           }
         } else {
-           html += createCard('nlb', 'B2P', '深圳灣', '天慈邨', '連線中...', '');
+           busHtml += createCard('nlb', 'B2P', '深圳灣', '天慈邨', '連線中...', '');
         }
 
       } catch (e) { console.error('更新交通失敗', e); }
       
-      document.getElementById('routes-container').innerHTML = html;
+      // 將三組 HTML 合併，加入分類標題
+      let finalHtml = '';
+      if(tmlHtml) finalHtml += `<div class="category-title">🚇 屯馬線</div><div class="routes-grid">${tmlHtml}</div>`;
+      if(lrtHtml) finalHtml += `<div class="category-title">🚈 輕鐵 (天慈站)</div><div class="routes-grid">${lrtHtml}</div>`;
+      if(busHtml) finalHtml += `<div class="category-title">🚌 巴士路線</div><div class="routes-grid">${busHtml}</div>`;
+      
+      document.getElementById('routes-container').innerHTML = finalHtml;
       document.getElementById('update-time').textContent = `最後更新 ${formatTimeZeros(new Date())}`;
     }
 
