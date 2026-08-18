@@ -8,7 +8,7 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Smart Home Dashboard</title>
   <style>
-    /* 全局字體放大 10% (預設為 100%) */
+    /* 全局字體放大 10% */
     html { font-size: 110%; }
     
     :root {
@@ -22,14 +22,23 @@
     .card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; }
     
     /* Left Panel: Time & Weather */
-    .time-box { border-bottom: 2px dashed #ECEFF1; padding-bottom: 12px; margin-bottom: 16px; }
-    .time { font-size: 3.5rem; font-weight: 700; color: #1E293B; letter-spacing: -1px; }
-    .date { font-size: 1.1rem; color: var(--text-sub); font-weight: 500; margin-top: -5px; }
+    .time-box { display: flex; align-items: baseline; gap: 15px; border-bottom: 2px dashed #ECEFF1; padding-bottom: 12px; margin-bottom: 16px; }
+    .time { font-size: 3.8rem; font-weight: 800; color: #1E293B; letter-spacing: -1px; }
+    .date { font-size: 1.5rem; color: var(--text-sub); font-weight: 600; }
+    
     .weather-current { display: flex; align-items: center; justify-content: space-between; margin: 15px 0; }
-    .temp-big { font-size: 4.5rem; font-weight: 800; color: #E67E22; line-height: 1; }
+    .temp-big { font-size: 4.8rem; font-weight: 800; color: #E67E22; line-height: 1; }
     .temp-details { text-align: right; }
-    .weather-tags { display: flex; gap: 10px; margin-top: auto; flex-wrap: wrap; }
-    .tag { background: #EDF2F7; padding: 8px 12px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; }
+    
+    /* 圖像化 濕度與降雨面板 */
+    .weather-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: auto; }
+    .metric-card { padding: 15px; border-radius: 14px; display: flex; align-items: center; gap: 12px; }
+    .metric-card.humidity { background: #E0F2FE; color: #0369A1; }
+    .metric-card.rain { background: #F3E8FF; color: #6B21A8; }
+    .metric-icon { font-size: 2.2rem; }
+    .metric-info { display: flex; flex-direction: column; }
+    .metric-label { font-size: 0.9rem; font-weight: 700; opacity: 0.8; }
+    .metric-value { font-size: 1.6rem; font-weight: 800; line-height: 1.2; }
 
     /* Right Panel: Transport (Scrollable) */
     .transport-container { overflow-y: scroll; -webkit-overflow-scrolling: touch; padding-right: 5px; height: 100%; }
@@ -44,7 +53,6 @@
     .transit-item.nlb { border-color: var(--nlb-blue); }
     
     .transit-meta { display: flex; align-items: center; gap: 12px; }
-    /* 解決屯馬線斷行問題：加闊 min-width 並強制不換行 (nowrap) */
     .route-num { font-size: 1.4rem; font-weight: 800; min-width: 85px; text-align: center; white-space: nowrap; flex-shrink: 0; }
     .route-dest { font-weight: 700; font-size: 1.1rem; }
     .route-stop { font-size: 0.85rem; color: var(--text-sub); }
@@ -64,19 +72,33 @@
         <div class="date" id="date-str">--月--日</div>
       </div>
       
-      <!-- 天氣警告標誌專區 (預設為空) -->
+      <!-- 天氣警告標誌專區 -->
       <div id="warning-container" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;"></div>
       
       <div class="section-title">天水圍天氣</div>
       <div class="weather-current">
         <div class="temp-big" id="current-temp">--°</div>
         <div class="temp-details">
-          <div style="font-size: 1.1rem; font-weight: 600;" id="forecast-range">預測: --° ~ --°</div>
+          <div style="font-size: 1.2rem; font-weight: 700;" id="forecast-range">預測: --° ~ --°</div>
         </div>
       </div>
-      <div class="weather-tags">
-        <div class="tag" id="humidity">濕度: --%</div>
-        <div class="tag" id="rain-info">降雨概率: --</div>
+      
+      <!-- 全新圖像化 濕度與降雨面板 -->
+      <div class="weather-metrics">
+        <div class="metric-card humidity">
+          <span class="metric-icon">💧</span>
+          <div class="metric-info">
+            <span class="metric-label">相對濕度</span>
+            <span class="metric-value" id="humidity">--%</span>
+          </div>
+        </div>
+        <div class="metric-card rain">
+          <span class="metric-icon">☔</span>
+          <div class="metric-info">
+            <span class="metric-label">降雨概率</span>
+            <span class="metric-value" id="rain-info">--</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -85,7 +107,7 @@
       <div class="transport-container" id="transport-list">
         <div class="section-title">
           <span>實時交通狀態</span>
-          <span id="update-time" style="font-size: 0.8rem; font-weight: normal;">初始化系統中...</span>
+          <span id="update-time" style="font-size: 0.85rem; font-weight: normal;">初始化系統中...</span>
         </div>
       </div>
     </div>
@@ -108,10 +130,16 @@
     let kmbStopDict = {}; 
     let nlbB2pInfo = null;
 
-    // --- 時間系統 ---
+    // --- 時間系統 (修復 3:4 問題) ---
+    function formatTimeZeros(nowObj) {
+      const h = nowObj.getHours().toString().padStart(2, '0');
+      const m = nowObj.getMinutes().toString().padStart(2, '0');
+      return `${h}:${m}`;
+    }
+
     function updateClock() {
       const now = new Date();
-      document.getElementById('clock').textContent = now.toTimeString().slice(0, 5);
+      document.getElementById('clock').textContent = formatTimeZeros(now);
       const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
       document.getElementById('date-str').textContent = `${now.getMonth()+1}月${now.getDate()}日 (星期${weekdays[now.getDay()]})`;
     }
@@ -122,46 +150,47 @@
       try {
         const rhrRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc').then(r=>r.json());
         
-        // 渲染天氣警告標誌
+        // 渲染天氣警告標誌 (放大 + 去除句號)
         const warnContainer = document.getElementById('warning-container');
         if (rhrRes.warningMessage && rhrRes.warningMessage.length > 0) {
            let warnHtml = '';
            rhrRes.warningMessage.forEach(msg => {
-               let name = msg.replace('現正生效', '').trim();
+               // 去除「現正生效」及結尾「。」
+               let name = msg.replace('現正生效', '').replace(/。/g, '').trim();
                let bg = '#E74C3C'; let icon = '⚠️'; let textColor = '#FFFFFF';
                
-               // 自動配對顏色及 Emoji Logo
                if (name.includes('雷暴')) { bg = '#8E44AD'; icon = '🌩️'; }
                else if (name.includes('黃色暴雨')) { bg = '#F1C40F'; icon = '🟨'; textColor = '#000000'; }
                else if (name.includes('紅色暴雨')) { bg = '#E74C3C'; icon = '🟥'; }
                else if (name.includes('黑色暴雨')) { bg = '#2C3E50'; icon = '⬛'; }
-               else if (name.includes('一號') || name.includes('三號') || name.includes('八號') || name.includes('九號') || name.includes('十號')) { bg = '#34495E'; icon = '🌀'; }
-               else if (name.includes('酷熱')) { bg = '#D35400'; icon = '🥵'; }
-               else if (name.includes('寒冷')) { bg = '#2980B9'; icon = '🥶'; }
-               else if (name.includes('火災危險')) {
-                   if (name.includes('黃色')) { bg = '#F39C12'; icon = '🔥'; name='黃色火災危險'; textColor = '#000000'; }
-                   else { bg = '#C0392B'; icon = '🔥'; name='紅色火災危險'; }
-               }
+               else if (name.includes('號信號')) { bg = '#34495E'; icon = '🌀'; }
                else if (name.includes('季候風')) { bg = '#16A085'; icon = '💨'; }
-               else if (name.includes('山泥傾瀉')) { bg = '#7F8C8D'; icon = '⛰️'; }
 
-               warnHtml += `<div style="background: ${bg}; color: ${textColor}; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);"><span>${icon}</span><span>${name}</span></div>`;
+               warnHtml += `<div style="background: ${bg}; color: ${textColor}; padding: 10px 16px; border-radius: 10px; font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);"><span>${icon}</span><span>${name}</span></div>`;
            });
            warnContainer.innerHTML = warnHtml;
         } else {
            warnContainer.innerHTML = '';
         }
 
-        // 渲染溫度及濕度
-        const tswTemp = rhrRes.temperature.data.find(d => d.place === '天水圍' || d.place === '香港濕地公園');
-        if (tswTemp) document.getElementById('current-temp').textContent = `${tswTemp.value}°`;
-        if (rhrRes.humidity) document.getElementById('humidity').textContent = `濕度: ${rhrRes.humidity.data[0].value}%`;
+        // 溫度顯示 (加入後備地區防斷線機制)
+        const backupPlaces = ['天水圍', '香港濕地公園', '流浮山', '元朗公園', '屯門', '香港天文台'];
+        let finalTemp = null;
+        for (let p of backupPlaces) {
+            finalTemp = rhrRes.temperature.data.find(d => d.place === p);
+            if (finalTemp) break; // 一搵到有數據就停
+        }
+        if (finalTemp) document.getElementById('current-temp').textContent = `${finalTemp.value}°`;
+        
+        // 濕度顯示
+        if (rhrRes.humidity) document.getElementById('humidity').textContent = `${rhrRes.humidity.data[0].value}%`;
 
+        // 預測及降雨顯示
         const fndRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc').then(r=>r.json());
         if (fndRes.weatherForecast) {
           const today = fndRes.weatherForecast[0];
           document.getElementById('forecast-range').textContent = `預測: ${today.forecastMintemp.value}° ~ ${today.forecastMaxtemp.value}°`;
-          document.getElementById('rain-info').textContent = `降雨概率: ${today.PSR}`;
+          document.getElementById('rain-info').textContent = today.PSR;
         }
       } catch (e) { console.error('天氣API錯誤', e); }
     }
@@ -223,7 +252,7 @@
     }
 
     async function fetchAllTransport() {
-      let html = `<div class="section-title"><span>實時交通狀態</span><span id="update-time" style="font-size: 0.8rem; font-weight: normal;">最後更新 ${new Date().toLocaleTimeString().slice(0,5)}</span></div>`;
+      let html = `<div class="section-title"><span>實時交通狀態</span><span id="update-time" style="font-size: 0.9rem; font-weight: bold;">最後更新 ${formatTimeZeros(new Date())}</span></div>`;
       const now = new Date();
 
       try {
@@ -240,18 +269,26 @@
           html += createCard('mtr', '屯馬線', '屯門', '天水圍站 (2號月台)', dn1 || '尾班車已開出', dn2);
         }
 
-        // [2] 輕鐵
+        // [2] 輕鐵 (重寫：按路線及目的地分組顯示)
         const lrtRes = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${LRT_STATION}`).then(r=>r.json());
         if (lrtRes.platform_list) {
+          let lrtGroups = {}; // 用於將相同路線組合
           lrtRes.platform_list.forEach(plat => {
-            if(plat.route_list && plat.route_list.length > 0) {
-              const r = plat.route_list[0]; const r2 = plat.route_list[1];
-              const formatTime = (t) => {
+            if(plat.route_list) {
+              plat.route_list.forEach(train => {
+                 const key = `${train.route_no}-${train.dest_ch}`;
+                 if(!lrtGroups[key]) lrtGroups[key] = { route: train.route_no, dest: train.dest_ch, plat: plat.platform_id, times: [] };
+                 lrtGroups[key].times.push(train.time_en);
+              });
+            }
+          });
+          
+          Object.values(lrtGroups).forEach(g => {
+             const formatTime = (t) => {
                 if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
                 return t.replace(/ mins?/gi, '') + ' 分鐘';
-              };
-              html += createCard('lrt', r.route_no, r.dest_ch, `天慈站 (月台 ${plat.platform_id})`, formatTime(r.time_en), r2 ? formatTime(r2.time_en) : '');
-            }
+             };
+             html += createCard('lrt', g.route, g.dest, `天慈站 (月台 ${g.plat})`, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
           });
         }
 
