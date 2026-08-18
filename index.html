@@ -88,7 +88,7 @@
         </div>
       </div>
       
-      <!-- 全新圖像化 濕度與降雨面板 -->
+      <!-- 圖像化 濕度與降雨面板 -->
       <div class="weather-metrics">
         <div class="metric-card humidity">
           <span class="metric-icon">💧</span>
@@ -130,16 +130,20 @@
 
   <script>
     // ==========================================
-    // 1. 用戶設定區 
+    // 1. 用戶設定區 (升級版多站點引擎)
     // ==========================================
     const MY_STOP_NAME = '天慈'; 
     const MTR_TML_STATION = 'TIS'; 
     const LRT_STATION = '435'; 
     
+    // 每一條九巴路線都可以設定專屬嘅 stopKw (搜尋關鍵字)
     const KMB_ROUTES = [
-      { route: '276B', dir: 'O', dest: '上水' },
-      { route: '269M', dir: 'O', dest: '祖堯' },
-      { route: 'B1',   dir: 'O', dest: '落馬洲' }
+      { route: '276B', dir: 'O', dest: '上水', stopKw: '天慈' },
+      { route: '269M', dir: 'O', dest: '祖堯', stopKw: '天慈' },
+      { route: 'B1',   dir: 'O', dest: '落馬洲', stopKw: '天慈' },
+      { route: '265B', dir: 'O', dest: '旺角', stopKw: '天慈' },
+      { route: '269C', dir: 'O', dest: '觀塘', stopKw: '天祐' },
+      { route: '269D', dir: 'O', dest: '瀝源', stopKw: '天祐' }
     ];
 
     let kmbStopDict = {}; 
@@ -165,7 +169,6 @@
       try {
         const rhrRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc').then(r=>r.json());
         
-        // 渲染天氣警告標誌
         const warnContainer = document.getElementById('warning-container');
         if (rhrRes.warningMessage && rhrRes.warningMessage.length > 0) {
            let warnHtml = '';
@@ -187,7 +190,6 @@
            warnContainer.innerHTML = '';
         }
 
-        // 溫度顯示 (加入後備地區防斷線機制)
         const backupPlaces = ['天水圍', '香港濕地公園', '流浮山', '元朗公園', '屯門', '香港天文台'];
         let finalTemp = null;
         for (let p of backupPlaces) {
@@ -196,10 +198,8 @@
         }
         if (finalTemp) document.getElementById('current-temp').textContent = `${finalTemp.value}°`;
         
-        // 濕度顯示
         if (rhrRes.humidity) document.getElementById('humidity').textContent = `${rhrRes.humidity.data[0].value}%`;
 
-        // 預測及降雨顯示
         const fndRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc').then(r=>r.json());
         if (fndRes.weatherForecast) {
           const today = fndRes.weatherForecast[0];
@@ -293,7 +293,8 @@
               html += createCard('kmb', r.route, r.dest, info.stopName, '目前無班次', '');
             }
           } else {
-             html += createCard('kmb', r.route, r.dest, '天慈邨', '系統連線中...', '');
+             // 如果未搵到站名，顯示預設關鍵字
+             html += createCard('kmb', r.route, r.dest, r.stopKw, '系統連線中...', '');
           }
         }
 
@@ -339,9 +340,11 @@
         for(let r of KMB_ROUTES) {
           const apiDir = r.dir === 'O' ? 'outbound' : 'inbound';
           const routeStops = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${r.route}/${apiDir}/1`).then(r=>r.json()).then(j=>j.data);
+          
           for(let rs of routeStops) {
             const sInfo = kmbAllStops.find(s => s.stop === rs.stop);
-            if(sInfo && sInfo.name_tc.includes(MY_STOP_NAME)) {
+            // 升級版：根據路線專屬嘅 stopKw 去配對站名
+            if(sInfo && sInfo.name_tc.includes(r.stopKw)) {
               kmbStopDict[r.route] = { stopId: rs.stop, stopName: sInfo.name_tc };
               break;
             }
@@ -364,7 +367,6 @@
       const icon = document.getElementById('refresh-icon');
       const timeText = document.getElementById('update-time');
       
-      // 開啟旋轉動畫與提示
       icon.classList.add('spin-anim');
       timeText.textContent = '獲取最新資訊中...';
       
@@ -373,7 +375,6 @@
       } catch (e) {
         console.error(e);
       } finally {
-        // 關閉旋轉動畫
         setTimeout(() => icon.classList.remove('spin-anim'), 500);
       }
     }
@@ -381,8 +382,8 @@
     // 啟動程式
     fetchWeather();
     autoFindStopIds();
-    setInterval(fetchAllTransport, 30000); // 交通每 30 秒自動更新
-    setInterval(fetchWeather, 600000);     // 天氣每 10 分鐘自動更新
+    setInterval(fetchAllTransport, 30000); 
+    setInterval(fetchWeather, 600000);     
   </script>
 </body>
 </html>
