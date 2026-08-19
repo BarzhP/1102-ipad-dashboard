@@ -8,8 +8,8 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Smart Home Dashboard</title>
   <style>
-    /* 全局字體稍微收緊以完美塞入三層結構 */
-    html { font-size: 102%; }
+    /* 全局字體放大約 15% */
+    html { font-size: 118%; }
     
     :root {
       --bg: #F4F6F9; --card-bg: #FFFFFF; --text-main: #2C3E50; --text-sub: #7F8C8D;
@@ -54,7 +54,7 @@
     .h-time { font-size: 0.95rem; font-weight: 700; color: var(--text-sub); }
     .h-icon { font-size: 1.8rem; }
     .h-prob { font-size: 1.1rem; font-weight: 800; color: #3498DB; }
-    .h-prob.high { color: #E74C3C; } /* 高機率變紅色 */
+    .h-prob.high { color: #E74C3C; }
 
     /* =========================================
        下部分：交通實時到站 (Bottom Panel)
@@ -70,10 +70,11 @@
     .category-title { font-size: 1.1rem; font-weight: 800; color: #334155; margin: 6px 0; display: flex; align-items: center; gap: 6px; }
 
     .transport-container { flex: 1; overflow: hidden; }
-    .routes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; padding-bottom: 5px; }
+    /* 卡片最小闊度調整為 145px 以配合放大後的字體 */
+    .routes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; padding-bottom: 5px; }
     
-    /* 正方形卡片設計 (極致壓縮高度以適應三層版面) */
-    .transit-item { background: #F8FAFC; border-radius: 12px; padding: 10px 8px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; border-top: 6px solid #CBD5E1; height: 110px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+    /* 正方形卡片設計 (高度放大至 125px 以避免文字逼爆) */
+    .transit-item { background: #F8FAFC; border-radius: 12px; padding: 10px 8px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; border-top: 6px solid #CBD5E1; height: 125px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
     
     .transit-item.mtr { border-top-color: var(--mtr-red); }
     .transit-item.lrt { border-top-color: var(--lrt-orange); }
@@ -242,19 +243,16 @@
     // --- 2. 外部 API：每小時降雨機率 (Open-Meteo 天水圍區) ---
     async function fetchHourlyWeather() {
       try {
-        // 使用 Open-Meteo 免費 API，精準獲取天水圍 (Lat: 22.46, Lon: 114.00) 數據
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=22.4587&longitude=114.0045&hourly=precipitation_probability&timezone=Asia%2FHong_Kong&forecast_days=2');
         const data = await res.json();
         const now = new Date();
         
-        // 尋找當前小時的 Index
         let startIndex = data.hourly.time.findIndex(t => {
             const time = new Date(t);
             return time.getDate() === now.getDate() && time.getHours() === now.getHours();
         });
         if (startIndex === -1) startIndex = 0;
         
-        // 截取未來 8 小時
         const times = data.hourly.time.slice(startIndex, startIndex + 8);
         const probs = data.hourly.precipitation_probability.slice(startIndex, startIndex + 8);
         
@@ -264,14 +262,13 @@
            const timeStr = timeObj.getHours().toString().padStart(2, '0') + ':00';
            const prob = probs[i];
            
-           // 動態切換天氣 Icon 及文字顏色
            let icon = '☁️';
            let probClass = 'h-prob';
            
-           if (prob >= 70) { icon = '🌧️'; probClass += ' high'; } // 高機率落雨
+           if (prob >= 70) { icon = '🌧️'; probClass += ' high'; }
            else if (prob >= 40) icon = '🌦️';
            else if (prob > 10) icon = '🌥️';
-           else icon = '☀️'; // 機率低於 10% 顯示太陽
+           else icon = '☀️';
            
            html += `
              <div class="hourly-item" style="background: ${prob > 40 ? '#EFF6FF' : 'transparent'}">
@@ -471,12 +468,11 @@
       }
     }
 
-    // 啟動程式 (加入咗 fetchHourlyWeather)
     fetchWeather();
     fetchHourlyWeather();
     autoFindStopIds();
     setInterval(fetchAllTransport, 30000); 
-    setInterval(() => { fetchWeather(); fetchHourlyWeather(); }, 600000); // 10分鐘更新一次天氣
+    setInterval(() => { fetchWeather(); fetchHourlyWeather(); }, 600000); 
   </script>
 </body>
 </html>
