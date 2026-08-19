@@ -8,73 +8,72 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Smart Home Dashboard</title>
   <style>
-    /* 全局字體放大約 15% */
-    html { font-size: 118%; }
+    /* 微調字體比例至 112%，確保 14 張卡片一頁過顯示 */
+    html { font-size: 112%; }
     
     :root {
       --bg: #F4F6F9; --card-bg: #FFFFFF; --text-main: #2C3E50; --text-sub: #7F8C8D;
       --kmb-red: #E3002B; --mtr-red: #92062C; --lrt-orange: #D35400; --nlb-blue: #2980B9;
-      --green: #27AE60; --primary: #3498DB; --radius: 18px;
+      --green: #27AE60; --primary: #3498DB; --radius: 16px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
-    /* 緊湊嘅上下三層排列佈局 */
-    body { background-color: var(--bg); color: var(--text-main); padding: 12px 18px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }
+    /* 極限壓縮邊距，防止出現捲軸 */
+    body { background-color: var(--bg); color: var(--text-main); padding: 10px 15px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; gap: 10px; }
     
     /* =========================================
-       上部分：頂部控制台 (Top Panel)
+       上部分：頂部控制台
        ========================================= */
-    .top-panel { background: var(--card-bg); border-radius: var(--radius); padding: 15px 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .top-panel { background: var(--card-bg); border-radius: var(--radius); padding: 12px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
     
     .time-area { display: flex; flex-direction: column; justify-content: center; }
-    .time { font-size: 4rem; font-weight: 800; color: #1E293B; letter-spacing: -1px; line-height: 1; }
-    .date { font-size: 1.25rem; color: var(--text-sub); font-weight: 600; padding-left: 5px; margin-top: 4px; }
+    .time { font-size: 3.8rem; font-weight: 800; color: #1E293B; letter-spacing: -1px; line-height: 1; }
+    .date { font-size: 1.15rem; color: var(--text-sub); font-weight: 600; padding-left: 5px; margin-top: 4px; }
     
-    .weather-area { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; flex: 1; border-left: 2px dashed #ECEFF1; border-right: 2px dashed #ECEFF1; margin: 0 20px; padding: 0 15px; }
-    .weather-main { display: flex; align-items: center; gap: 15px; }
-    .temp-big { font-size: 3.8rem; font-weight: 800; color: #E67E22; line-height: 1; }
+    .weather-area { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; flex: 1; border-left: 2px dashed #ECEFF1; border-right: 2px dashed #ECEFF1; margin: 0 15px; padding: 0 10px; }
+    .weather-main { display: flex; align-items: center; gap: 12px; }
+    .temp-big { font-size: 3.6rem; font-weight: 800; color: #E67E22; line-height: 1; }
     .temp-details { display: flex; flex-direction: column; gap: 2px; }
     
     .metrics-area { display: flex; gap: 10px; }
-    .metric-card { padding: 10px 16px; border-radius: 14px; display: flex; align-items: center; gap: 10px; min-width: 140px; }
+    .metric-card { padding: 8px 14px; border-radius: 12px; display: flex; align-items: center; gap: 8px; min-width: 130px; }
     .metric-card.humidity { background: #E0F2FE; color: #0369A1; }
     .metric-card.rain { background: #F3E8FF; color: #6B21A8; }
-    .metric-icon { font-size: 2rem; }
+    .metric-icon { font-size: 1.8rem; }
     .metric-info { display: flex; flex-direction: column; }
-    .metric-label { font-size: 0.85rem; font-weight: 700; opacity: 0.85; }
-    .metric-value { font-size: 1.4rem; font-weight: 800; line-height: 1.2; }
+    .metric-label { font-size: 0.8rem; font-weight: 700; opacity: 0.85; }
+    .metric-value { font-size: 1.3rem; font-weight: 800; line-height: 1.2; }
 
     /* =========================================
-       中部分：每小時降雨機率 (Middle Panel)
+       中部分：每小時降雨機率
        ========================================= */
-    .mid-panel { background: var(--card-bg); border-radius: var(--radius); padding: 12px 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
-    .mid-title { font-size: 1.1rem; font-weight: 800; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
+    .mid-panel { background: var(--card-bg); border-radius: var(--radius); padding: 10px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
+    .mid-title { font-size: 1.05rem; font-weight: 800; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
     .hourly-container { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-    .hourly-item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 12px; transition: background 0.2s; }
-    .h-time { font-size: 0.95rem; font-weight: 700; color: var(--text-sub); }
-    .h-icon { font-size: 1.8rem; }
-    .h-prob { font-size: 1.1rem; font-weight: 800; color: #3498DB; }
+    .hourly-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 10px; transition: background 0.2s; }
+    .h-time { font-size: 0.9rem; font-weight: 700; color: var(--text-sub); }
+    .h-icon { font-size: 1.6rem; }
+    .h-prob { font-size: 1.05rem; font-weight: 800; color: #3498DB; }
     .h-prob.high { color: #E74C3C; }
 
     /* =========================================
-       下部分：交通實時到站 (Bottom Panel)
+       下部分：交通實時到站
        ========================================= */
-    .bottom-panel { background: var(--card-bg); border-radius: var(--radius); padding: 15px 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .bottom-panel { background: var(--card-bg); border-radius: var(--radius); padding: 12px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     
-    .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #ECEFF1; padding-bottom: 10px; margin-bottom: 5px; flex-shrink: 0; }
-    .update-btn { background: var(--primary); color: white; border: none; padding: 6px 16px; border-radius: 20px; font-size: 1rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(52,152,219,0.3); transition: opacity 0.2s; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #ECEFF1; padding-bottom: 8px; margin-bottom: 2px; flex-shrink: 0; }
+    .update-btn { background: var(--primary); color: white; border: none; padding: 6px 14px; border-radius: 18px; font-size: 0.95rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(52,152,219,0.3); transition: opacity 0.2s; }
     .update-btn:active { opacity: 0.7; }
     .spin-anim { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    .category-title { font-size: 1.1rem; font-weight: 800; color: #334155; margin: 6px 0; display: flex; align-items: center; gap: 6px; }
+    .category-title { font-size: 1.05rem; font-weight: 800; color: #334155; margin: 8px 0 4px 0; display: flex; align-items: center; gap: 6px; }
 
     .transport-container { flex: 1; overflow: hidden; }
-    /* 卡片最小闊度調整為 145px 以配合放大後的字體 */
-    .routes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; padding-bottom: 5px; }
+    .routes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; padding-bottom: 2px; }
     
-    /* 正方形卡片設計 (高度放大至 125px 以避免文字逼爆) */
-    .transit-item { background: #F8FAFC; border-radius: 12px; padding: 10px 8px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; border-top: 6px solid #CBD5E1; height: 125px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+    /* 高度壓縮至 110px，保證塞得落 3 行巴士卡片 */
+    .transit-item { background: #F8FAFC; border-radius: 12px; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; border-top: 6px solid #CBD5E1; height: 110px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
     
     .transit-item.mtr { border-top-color: var(--mtr-red); }
     .transit-item.lrt { border-top-color: var(--lrt-orange); }
@@ -82,19 +81,18 @@
     .transit-item.nlb { border-top-color: var(--nlb-blue); }
     
     .sq-top { width: 100%; }
-    .route-num { font-size: 1.4rem; font-weight: 800; color: var(--text-main); line-height: 1; }
+    .route-num { font-size: 1.35rem; font-weight: 800; color: var(--text-main); line-height: 1; }
     
-    .sq-mid { width: 100%; font-size: 1.1rem; font-weight: 800; color: #1E293B; margin: auto 0; }
+    .sq-mid { width: 100%; font-size: 1.05rem; font-weight: 800; color: #1E293B; margin: auto 0; }
     
     .sq-bot { width: 100%; }
-    .eta-min { font-size: 1.4rem; font-weight: 800; color: var(--green); line-height: 1.1; }
+    .eta-min { font-size: 1.35rem; font-weight: 800; color: var(--green); line-height: 1.1; }
     .error-text { font-size: 0.95rem; color: #94A3B8; font-weight: 700; line-height: 1.1; padding: 2px 0;} 
     .eta-next { font-size: 0.75rem; color: var(--text-sub); margin-top: 2px; min-height: 12px; }
   </style>
 </head>
 <body>
   
-  <!-- ================= 上部分 ================= -->
   <div class="top-panel">
     <div class="time-area">
       <div class="time" id="clock">00:00</div>
@@ -102,7 +100,7 @@
     </div>
     
     <div class="weather-area">
-      <div id="warning-container" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+      <div id="warning-container" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
       <div class="weather-main">
         <div class="temp-big" id="current-temp">--°</div>
         <div class="temp-details">
@@ -130,7 +128,6 @@
     </div>
   </div>
 
-  <!-- ================= 中部分：每小時降雨 ================= -->
   <div class="mid-panel">
     <div class="mid-title">🕒 未來 8 小時降雨機率 (天水圍區)</div>
     <div class="hourly-container" id="hourly-container">
@@ -138,7 +135,6 @@
     </div>
   </div>
 
-  <!-- ================= 下部分：交通儀表板 ================= -->
   <div class="bottom-panel">
     <div class="section-header">
       <div>
@@ -150,7 +146,6 @@
       </button>
     </div>
 
-    <!-- 零捲動正方形容器 -->
     <div class="transport-container" id="routes-container">
       <!-- 動態生成 -->
     </div>
@@ -180,7 +175,6 @@
     let kmbStopDict = {}; 
     let nlbB2pInfo = null;
 
-    // --- 時間系統 ---
     function formatTimeZeros(nowObj) {
       const h = nowObj.getHours().toString().padStart(2, '0');
       const m = nowObj.getMinutes().toString().padStart(2, '0');
@@ -195,7 +189,6 @@
     }
     setInterval(updateClock, 1000); updateClock();
 
-    // --- 1. 天文台天氣系統 ---
     async function fetchWeather() {
       try {
         const rhrRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc').then(r=>r.json());
@@ -240,7 +233,6 @@
       } catch (e) { console.error('天氣API錯誤', e); }
     }
 
-    // --- 2. 外部 API：每小時降雨機率 (Open-Meteo 天水圍區) ---
     async function fetchHourlyWeather() {
       try {
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=22.4587&longitude=114.0045&hourly=precipitation_probability&timezone=Asia%2FHong_Kong&forecast_days=2');
@@ -282,7 +274,6 @@
       } catch (e) { console.error('每小時天氣 API 錯誤', e); }
     }
 
-    // --- 3. 交通系統核心 ---
     function parseSafeDate(dateStr) {
       if(!dateStr) return new Date();
       let s = dateStr.replace(/-/g, '/');
@@ -383,7 +374,7 @@
               busHtml += createCard('kmb', r.route, r.dest, '暫無班次', '');
             }
           } else {
-             busHtml += createCard('kmb', r.route, r.dest, '連線中...', '');
+             busHtml += createCard('kmb', r.route, r.dest, '讀取中...', '');
           }
         }
 
@@ -401,7 +392,7 @@
         }
         busHtml += k73Card;
 
-        // [5] B2P 新大嶼山巴士
+        // [5] B2P 新大嶼山巴士 (修復：掃描來回兩條路線搵天慈站)
         if(nlbB2pInfo) {
           const info = nlbB2pInfo;
           const nlbRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop-eta.php?action=eta&routeId=${info.routeId}&stopId=${info.stopId}&language=zh`).then(r=>r.json());
@@ -412,7 +403,7 @@
             busHtml += createCard('nlb', 'B2P', '深圳灣', '暫無班次', '');
           }
         } else {
-           busHtml += createCard('nlb', 'B2P', '深圳灣', '連線中...', '');
+           busHtml += createCard('nlb', 'B2P', '深圳灣', '未獲取數據', '');
         }
 
       } catch (e) { console.error('更新交通失敗', e); }
@@ -441,13 +432,19 @@
           }
         }
         
+        // 尋找大嶼山巴士 B2P (完美修復版)
         const nlbRoutes = await fetch('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list').then(r=>r.json()).then(j=>j.routes);
-        const b2pRoute = nlbRoutes.find(r => r.routeName_c === 'B2P');
-        if(b2pRoute) {
-          const nlbStops = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${b2pRoute.routeId}`).then(r=>r.json()).then(j=>j.stops);
+        const b2pRoutes = nlbRoutes.filter(r => r.routeName_c === 'B2P');
+        
+        for(let r of b2pRoutes) {
+          const nlbStops = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${r.routeId}`).then(res=>res.json()).then(j=>j.stops);
           const targetStop = nlbStops.find(s => s.stopName_c.includes(MY_STOP_NAME));
-          if(targetStop) nlbB2pInfo = { routeId: b2pRoute.routeId, stopId: targetStop.stopId, stopName: targetStop.stopName_c };
+          if(targetStop) {
+            nlbB2pInfo = { routeId: r.routeId, stopId: targetStop.stopId, stopName: targetStop.stopName_c };
+            break;
+          }
         }
+        
         fetchAllTransport();
       } catch(e) { console.error('尋找車站ID失敗', e); }
     }
