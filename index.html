@@ -76,7 +76,7 @@
     .transit-item.mtr { border-top-color: var(--mtr-red); }
     .transit-item.lrt { border-top-color: var(--lrt-orange); }
     .transit-item.kmb { border-top-color: var(--kmb-red); }
-    .transit-item.ctb { border-top-color: var(--ctb-yellow); } /* 城巴顏色 */
+    .transit-item.ctb { border-top-color: var(--ctb-yellow); } 
     .transit-item.nlb { border-top-color: var(--nlb-blue); }
     
     .sq-top { width: 100%; }
@@ -99,7 +99,6 @@
 </head>
 <body>
   
-  <!-- 毛玻璃 Loading 介面 -->
   <div id="full-loader" class="loader-overlay hidden">
     <div class="loader-content">
       <div class="spinner"></div>
@@ -182,16 +181,17 @@
     ];
 
     const KMB_ROUTES = [
-      { route: '276A', dir: 'O', dest: '太平', stopKw: '天耀' }, // 新增 276A
+      { route: '276A', dir: 'O', dest: '太平', stopKw: '天耀' }, 
       { route: '276B', dir: 'O', dest: '上水', stopKw: '天慈' },
       { route: '269M', dir: 'O', dest: '祖堯', stopKw: '天慈' },
       { route: 'B1',   dir: 'O', dest: '落馬洲', stopKw: '天慈' },
+      { route: '265B', dir: 'O', dest: '旺角', stopKw: '天慈' },
       { route: '269C', dir: 'O', dest: '觀塘', stopKw: '天祐' },
       { route: '269D', dir: 'O', dest: '瀝源', stopKw: '天祐' }
     ];
 
     const CTB_ROUTES = [
-      { route: '969', dir: 'outbound', dest: '銅鑼灣', stopKw: '天耀' } // 新增城巴 969
+      { route: '969', dir: 'outbound', dest: '銅鑼灣', stopKw: '天耀' } 
     ];
 
     let kmbStopDict = {}; 
@@ -215,27 +215,22 @@
     async function fetchWeather() {
       try {
         const rhrRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc').then(r=>r.json());
-        
         const warnContainer = document.getElementById('warning-container');
         if (rhrRes.warningMessage && rhrRes.warningMessage.length > 0) {
            let warnHtml = '';
            rhrRes.warningMessage.forEach(msg => {
                let name = msg.replace('現正生效', '').replace(/。/g, '').trim();
                let bg = '#E74C3C'; let icon = '⚠️'; let textColor = '#FFFFFF';
-               
                if (name.includes('雷暴')) { bg = '#8E44AD'; icon = '🌩️'; }
                else if (name.includes('黃色暴雨')) { bg = '#F1C40F'; icon = '🟨'; textColor = '#000000'; }
                else if (name.includes('紅色暴雨')) { bg = '#E74C3C'; icon = '🟥'; }
                else if (name.includes('黑色暴雨')) { bg = '#2C3E50'; icon = '⬛'; }
                else if (name.includes('號信號')) { bg = '#34495E'; icon = '🌀'; }
                else if (name.includes('季候風')) { bg = '#16A085'; icon = '💨'; }
-
                warnHtml += `<div style="background: ${bg}; color: ${textColor}; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);"><span>${icon}</span><span>${name}</span></div>`;
            });
            warnContainer.innerHTML = warnHtml;
-        } else {
-           warnContainer.innerHTML = '';
-        }
+        } else { warnContainer.innerHTML = ''; }
 
         const backupPlaces = ['天水圍', '香港濕地公園', '流浮山', '元朗公園', '屯門', '香港天文台'];
         let finalTemp = null;
@@ -244,7 +239,6 @@
             if (finalTemp) break; 
         }
         if (finalTemp) document.getElementById('current-temp').textContent = `${finalTemp.value}°`;
-        
         if (rhrRes.humidity) document.getElementById('humidity').textContent = `${rhrRes.humidity.data[0].value}%`;
 
         const fndRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc').then(r=>r.json());
@@ -261,10 +255,8 @@
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=22.4587&longitude=114.0045&hourly=precipitation_probability&timezone=Asia%2FHong_Kong&forecast_days=2');
         const data = await res.json();
         const now = new Date();
-        
         let startIndex = data.hourly.time.findIndex(t => {
-            const time = new Date(t);
-            return time.getDate() === now.getDate() && time.getHours() === now.getHours();
+            const time = new Date(t); return time.getDate() === now.getDate() && time.getHours() === now.getHours();
         });
         if (startIndex === -1) startIndex = 0;
         
@@ -276,13 +268,11 @@
            const timeObj = new Date(times[i]);
            const timeStr = timeObj.getHours().toString().padStart(2, '0') + ':00';
            const prob = probs[i];
-           
            let icon = '☁️'; let probClass = 'h-prob';
            if (prob >= 70) { icon = '🌧️'; probClass += ' high'; }
            else if (prob >= 40) icon = '🌦️';
            else if (prob > 10) icon = '🌥️';
            else icon = '☀️';
-           
            html += `<div class="hourly-item" style="background: ${prob > 40 ? '#EFF6FF' : 'transparent'}"><div class="h-time">${timeStr}</div><div class="h-icon">${icon}</div><div class="${probClass}">${prob}%</div></div>`;
         }
         document.getElementById('hourly-container').innerHTML = html;
@@ -297,6 +287,7 @@
       return new Date(s);
     }
 
+    // 更新：如果只有第一班車時間，明確顯示「其後暫無班次」
     function createCard(type, route, dest, eta1, eta2) {
       let primaryEta = eta1 || '暫無班次';
       if (primaryEta === '目前無班次') primaryEta = '暫無班次';
@@ -304,13 +295,23 @@
 
       const isNormal = primaryEta.includes('分鐘') || primaryEta.includes('到達');
       
+      // 處理第二班車顯示邏輯
+      let etaNextHtml = `<div class="eta-next">&nbsp;</div>`;
+      if (isNormal) {
+          if (eta2) {
+              etaNextHtml = `<div class="eta-next">下班: ${eta2}</div>`;
+          } else {
+              etaNextHtml = `<div class="eta-next" style="opacity: 0.6;">其後暫無班次</div>`;
+          }
+      }
+
       return `
         <div class="transit-item ${type}">
           <div class="sq-top"><div class="route-num">${route}</div></div>
           <div class="sq-mid">${dest}</div>
           <div class="sq-bot">
             ${isNormal ? `<div class="eta-min">${primaryEta}</div>` : `<div class="error-text">${primaryEta}</div>`}
-            ${eta2 && isNormal ? `<div class="eta-next">下班: ${eta2}</div>` : `<div class="eta-next">&nbsp;</div>`}
+            ${etaNextHtml}
           </div>
         </div>
       `;
@@ -329,7 +330,7 @@
           railHtml += createCard('mtr', '屯馬線', '烏溪沙', getEta(tml.UP, 0) || '尾班車已開', getEta(tml.UP, 1));
           railHtml += createCard('mtr', '屯馬線', '屯門', getEta(tml.DOWN, 0) || '尾班車已開', getEta(tml.DOWN, 1));
         }
-      } catch (e) { railHtml += createCard('mtr', '屯馬線', '系統錯誤', '連線失敗', ''); }
+      } catch (e) { railHtml += createCard('mtr', '屯馬線', '無法連接', '系統錯誤', ''); }
 
       // [2] 輕鐵
       try {
@@ -361,9 +362,9 @@
            const formatTime = (t) => { if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達'; return t.replace(/ mins?/gi, '') + ' 分鐘'; };
            railHtml += createCard('lrt', g.route, g.dest, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
         });
-      } catch (e) { railHtml += createCard('lrt', '輕鐵', '系統錯誤', '連線失敗', ''); }
+      } catch (e) { railHtml += createCard('lrt', '輕鐵', '無法連接', '系統錯誤', ''); }
 
-      // [3] KMB 九巴 (獨立 Try Catch 防火牆)
+      // [3] KMB 九巴
       for(let r of KMB_ROUTES) {
         try {
           if(kmbStopDict[r.route]) {
@@ -373,11 +374,11 @@
             const etas = validEtas.map(etaStr => Math.max(0, Math.floor((parseSafeDate(etaStr) - now) / 60000)));
             if(etas.length > 0) busHtml += createCard('kmb', r.route, r.dest, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
             else busHtml += createCard('kmb', r.route, r.dest, '暫無班次', '');
-          } else { busHtml += createCard('kmb', r.route, r.dest, '連線中...', ''); }
-        } catch (e) { busHtml += createCard('kmb', r.route, r.dest, '連線失敗', ''); }
+          } else { busHtml += createCard('kmb', r.route, r.dest, '載入中...', ''); }
+        } catch (e) { busHtml += createCard('kmb', r.route, r.dest, '無法連接', ''); }
       }
 
-      // [4] CTB 城巴 969 (獨立 Try Catch)
+      // [4] CTB 城巴 969
       for(let r of CTB_ROUTES) {
         try {
           if(ctbStopDict[r.route]) {
@@ -387,11 +388,11 @@
             const etas = validEtas.map(etaStr => Math.max(0, Math.floor((parseSafeDate(etaStr) - now) / 60000)));
             if(etas.length > 0) busHtml += createCard('ctb', r.route, r.dest, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
             else busHtml += createCard('ctb', r.route, r.dest, '暫無班次', '');
-          } else { busHtml += createCard('ctb', r.route, r.dest, '連線中...', ''); }
-        } catch (e) { busHtml += createCard('ctb', r.route, r.dest, '連線失敗', ''); }
+          } else { busHtml += createCard('ctb', r.route, r.dest, '載入中...', ''); }
+        } catch (e) { busHtml += createCard('ctb', r.route, r.dest, '無法連接', ''); }
       }
 
-      // [5] K73 港鐵巴士 (獨立 Try Catch)
+      // [5] K73 港鐵巴士
       try {
         const mtrbRes = await fetch('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({language: "zh", routeName: "K73"}) }).then(r=>r.json());
         if(mtrbRes.busStop) {
@@ -400,10 +401,10 @@
             const e1 = targetStop.bus[0].departureTimeInMinute; const e2 = targetStop.bus[1]?.departureTimeInMinute;
             busHtml += createCard('mtr', 'K73', '元朗西', e1==='0'?'即將到達':e1+' 分鐘', e2?(e2==='0'?'即將到達':e2+' 分鐘'):'');
           } else { busHtml += createCard('mtr', 'K73', '元朗西', '暫無班次', ''); }
-        }
-      } catch (e) { busHtml += createCard('mtr', 'K73', '元朗西', '連線失敗', ''); }
+        } else { busHtml += createCard('mtr', 'K73', '元朗西', '暫無班次', ''); }
+      } catch (e) { busHtml += createCard('mtr', 'K73', '元朗西', '無法連接', ''); }
 
-      // [6] B2P 新大嶼山巴士 (獨立 Try Catch)
+      // [6] B2P 新大嶼山巴士
       try {
         if(nlbB2pInfo) {
           const info = nlbB2pInfo;
@@ -412,8 +413,8 @@
             const etas = nlbRes.estimatedArrivals.map(e => Math.max(0, Math.floor((parseSafeDate(e.estimatedArrivalTime) - now) / 60000)));
             busHtml += createCard('nlb', 'B2P', '深圳灣', etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
           } else { busHtml += createCard('nlb', 'B2P', '深圳灣', '暫無班次', ''); }
-        } else { busHtml += createCard('nlb', 'B2P', '深圳灣', '連線中...', ''); }
-      } catch (e) { busHtml += createCard('nlb', 'B2P', '深圳灣', '連線失敗', ''); }
+        } else { busHtml += createCard('nlb', 'B2P', '深圳灣', '載入中...', ''); }
+      } catch (e) { busHtml += createCard('nlb', 'B2P', '深圳灣', '無法連接', ''); }
       
       let finalHtml = '';
       if(railHtml) finalHtml += `<div class="category-title">🚇 鐵路交通 (屯馬線 & 輕鐵)</div><div class="routes-grid">${railHtml}</div>`;
@@ -438,13 +439,16 @@
           }
         }
         
-        // 城巴 (並行尋找前 15 個車站，加快速度)
+        // 城巴 (順序讀取，完美解決 DDoS 被 Block 問題)
         for (let r of CTB_ROUTES) {
            const routeStops = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${r.route}/${r.dir}`).then(res=>res.json()).then(j=>j.data);
-           const first15 = routeStops.slice(0, 15);
-           const stopDetails = await Promise.all(first15.map(rs => fetch(`https://rt.data.gov.hk/v2/transport/citybus/stop/${rs.stop}`).then(res=>res.json()).then(j=>j.data)));
-           const target = stopDetails.find(s => s && s.name_tc.includes(r.stopKw));
-           if(target) ctbStopDict[r.route] = { stopId: target.stop, stopName: target.name_tc };
+           const first15 = routeStops.slice(0, 15); // 只掃描頭 15 個站慳時間
+           for (let rs of first15) {
+               const stopDetails = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/stop/${rs.stop}`).then(res=>res.json());
+               if(stopDetails.data && stopDetails.data.name_tc.includes(r.stopKw)) {
+                   ctbStopDict[r.route] = { stopId: stopDetails.data.stop, stopName: stopDetails.data.name_tc }; break;
+               }
+           }
         }
         
         // NLB
@@ -469,11 +473,12 @@
         await Promise.all([fetchWeather(), fetchHourlyWeather(), fetchAllTransport()]);
       } catch (e) {
       } finally {
-        // 等待最少 800ms 俾個動畫轉下，感覺良好啲
+        // 等待最少 800ms 確保動畫流暢
         setTimeout(() => { loader.classList.add('hidden'); }, 800);
       }
     }
 
+    // 初始化
     fetchWeather();
     fetchHourlyWeather();
     autoFindStopIds();
