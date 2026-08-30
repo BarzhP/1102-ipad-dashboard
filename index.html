@@ -8,91 +8,106 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Smart Home Dashboard</title>
   <style>
-    /* 微調字體比例至 112%，確保 14 張卡片一頁過顯示 */
-    html { font-size: 112%; }
+    /* 全局字體比例調整，完美適配 15 張卡片 */
+    html { font-size: 110%; }
     
     :root {
       --bg: #F4F6F9; --card-bg: #FFFFFF; --text-main: #2C3E50; --text-sub: #7F8C8D;
       --kmb-red: #E3002B; --mtr-red: #92062C; --lrt-orange: #D35400; --nlb-blue: #2980B9;
-      --green: #27AE60; --primary: #3498DB; --radius: 16px;
+      --ctb-yellow: #F1C40F; --green: #27AE60; --primary: #3498DB; --radius: 18px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
-    /* 極限壓縮邊距，防止出現捲軸 */
-    body { background-color: var(--bg); color: var(--text-main); padding: 10px 15px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; gap: 10px; }
+    body { background-color: var(--bg); color: var(--text-main); padding: 12px 18px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; gap: 10px; }
     
     /* =========================================
        上部分：頂部控制台
        ========================================= */
-    .top-panel { background: var(--card-bg); border-radius: var(--radius); padding: 12px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .top-panel { background: var(--card-bg); border-radius: var(--radius); padding: 14px 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
     
     .time-area { display: flex; flex-direction: column; justify-content: center; }
-    .time { font-size: 3.8rem; font-weight: 800; color: #1E293B; letter-spacing: -1px; line-height: 1; }
-    .date { font-size: 1.15rem; color: var(--text-sub); font-weight: 600; padding-left: 5px; margin-top: 4px; }
+    .time { font-size: 4rem; font-weight: 800; color: #1E293B; letter-spacing: -1px; line-height: 1; }
+    .date { font-size: 1.25rem; color: var(--text-sub); font-weight: 600; padding-left: 5px; margin-top: 4px; }
     
-    .weather-area { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; flex: 1; border-left: 2px dashed #ECEFF1; border-right: 2px dashed #ECEFF1; margin: 0 15px; padding: 0 10px; }
-    .weather-main { display: flex; align-items: center; gap: 12px; }
-    .temp-big { font-size: 3.6rem; font-weight: 800; color: #E67E22; line-height: 1; }
+    .weather-area { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; flex: 1; border-left: 2px dashed #ECEFF1; border-right: 2px dashed #ECEFF1; margin: 0 15px; padding: 0 15px; }
+    .weather-main { display: flex; align-items: center; gap: 15px; }
+    .temp-big { font-size: 3.8rem; font-weight: 800; color: #E67E22; line-height: 1; }
     .temp-details { display: flex; flex-direction: column; gap: 2px; }
     
     .metrics-area { display: flex; gap: 10px; }
-    .metric-card { padding: 8px 14px; border-radius: 12px; display: flex; align-items: center; gap: 8px; min-width: 130px; }
+    .metric-card { padding: 10px 16px; border-radius: 14px; display: flex; align-items: center; gap: 10px; min-width: 140px; }
     .metric-card.humidity { background: #E0F2FE; color: #0369A1; }
     .metric-card.rain { background: #F3E8FF; color: #6B21A8; }
-    .metric-icon { font-size: 1.8rem; }
+    .metric-icon { font-size: 2rem; }
     .metric-info { display: flex; flex-direction: column; }
-    .metric-label { font-size: 0.8rem; font-weight: 700; opacity: 0.85; }
-    .metric-value { font-size: 1.3rem; font-weight: 800; line-height: 1.2; }
+    .metric-label { font-size: 0.85rem; font-weight: 700; opacity: 0.85; }
+    .metric-value { font-size: 1.4rem; font-weight: 800; line-height: 1.2; }
 
     /* =========================================
        中部分：每小時降雨機率
        ========================================= */
-    .mid-panel { background: var(--card-bg); border-radius: var(--radius); padding: 10px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
+    .mid-panel { background: var(--card-bg); border-radius: var(--radius); padding: 10px 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
     .mid-title { font-size: 1.05rem; font-weight: 800; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
     .hourly-container { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-    .hourly-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 10px; transition: background 0.2s; }
-    .h-time { font-size: 0.9rem; font-weight: 700; color: var(--text-sub); }
-    .h-icon { font-size: 1.6rem; }
+    .hourly-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 12px; transition: background 0.2s; }
+    .h-time { font-size: 0.95rem; font-weight: 700; color: var(--text-sub); }
+    .h-icon { font-size: 1.7rem; }
     .h-prob { font-size: 1.05rem; font-weight: 800; color: #3498DB; }
     .h-prob.high { color: #E74C3C; }
 
     /* =========================================
        下部分：交通實時到站
        ========================================= */
-    .bottom-panel { background: var(--card-bg); border-radius: var(--radius); padding: 12px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .bottom-panel { background: var(--card-bg); border-radius: var(--radius); padding: 14px 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     
     .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #ECEFF1; padding-bottom: 8px; margin-bottom: 2px; flex-shrink: 0; }
-    .update-btn { background: var(--primary); color: white; border: none; padding: 6px 14px; border-radius: 18px; font-size: 0.95rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(52,152,219,0.3); transition: opacity 0.2s; }
+    .update-btn { background: var(--primary); color: white; border: none; padding: 8px 18px; border-radius: 20px; font-size: 1.05rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(52,152,219,0.3); transition: opacity 0.2s; }
     .update-btn:active { opacity: 0.7; }
-    .spin-anim { animation: spin 1s linear infinite; display: inline-block; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-
-    .category-title { font-size: 1.05rem; font-weight: 800; color: #334155; margin: 8px 0 4px 0; display: flex; align-items: center; gap: 6px; }
-
-    .transport-container { flex: 1; overflow: hidden; }
-    .routes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; padding-bottom: 2px; }
     
-    /* 高度壓縮至 110px，保證塞得落 3 行巴士卡片 */
-    .transit-item { background: #F8FAFC; border-radius: 12px; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; border-top: 6px solid #CBD5E1; height: 110px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+    .category-title { font-size: 1.05rem; font-weight: 800; color: #334155; margin: 6px 0 4px 0; display: flex; align-items: center; gap: 6px; }
+
+    .transport-container { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 5px; margin-right: -5px; }
+    .transport-container::-webkit-scrollbar { display: none; }
+    
+    .routes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; padding-bottom: 4px; }
+    
+    .transit-item { background: #F8FAFC; border-radius: 12px; padding: 10px 8px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; border-top: 6px solid #CBD5E1; height: 110px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
     
     .transit-item.mtr { border-top-color: var(--mtr-red); }
     .transit-item.lrt { border-top-color: var(--lrt-orange); }
     .transit-item.kmb { border-top-color: var(--kmb-red); }
+    .transit-item.ctb { border-top-color: var(--ctb-yellow); } /* 城巴顏色 */
     .transit-item.nlb { border-top-color: var(--nlb-blue); }
     
     .sq-top { width: 100%; }
-    .route-num { font-size: 1.35rem; font-weight: 800; color: var(--text-main); line-height: 1; }
-    
+    .route-num { font-size: 1.4rem; font-weight: 800; color: var(--text-main); line-height: 1; }
     .sq-mid { width: 100%; font-size: 1.05rem; font-weight: 800; color: #1E293B; margin: auto 0; }
-    
     .sq-bot { width: 100%; }
-    .eta-min { font-size: 1.35rem; font-weight: 800; color: var(--green); line-height: 1.1; }
+    .eta-min { font-size: 1.4rem; font-weight: 800; color: var(--green); line-height: 1.1; }
     .error-text { font-size: 0.95rem; color: #94A3B8; font-weight: 700; line-height: 1.1; padding: 2px 0;} 
     .eta-next { font-size: 0.75rem; color: var(--text-sub); margin-top: 2px; min-height: 12px; }
+
+    /* =========================================
+       全螢幕毛玻璃 Loading 介面
+       ========================================= */
+    .loader-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center; opacity: 1; transition: opacity 0.3s ease; }
+    .loader-overlay.hidden { opacity: 0; pointer-events: none; }
+    .loader-content { text-align: center; display: flex; flex-direction: column; align-items: center; background: #FFF; padding: 30px 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .spinner { width: 50px; height: 50px; border: 5px solid #F3F4F6; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   
+  <!-- 毛玻璃 Loading 介面 -->
+  <div id="full-loader" class="loader-overlay hidden">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <div style="font-size: 1.3rem; font-weight: 800; color: #2C3E50;">獲取最新數據中...</div>
+      <div style="font-size: 0.95rem; font-weight: 600; color: #7F8C8D; margin-top: 6px;">正在連接各大巴士及港鐵系統</div>
+    </div>
+  </div>
+
   <div class="top-panel">
     <div class="time-area">
       <div class="time" id="clock">00:00</div>
@@ -100,7 +115,7 @@
     </div>
     
     <div class="weather-area">
-      <div id="warning-container" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+      <div id="warning-container" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
       <div class="weather-main">
         <div class="temp-big" id="current-temp">--°</div>
         <div class="temp-details">
@@ -152,6 +167,9 @@
   </div>
 
   <script>
+    // ==========================================
+    // 用戶設定區 (完整路線名單)
+    // ==========================================
     const MY_STOP_NAME = '天慈'; 
     const MTR_TML_STATION = 'TIS'; 
     const LRT_STATION = '435'; 
@@ -164,15 +182,20 @@
     ];
 
     const KMB_ROUTES = [
+      { route: '276A', dir: 'O', dest: '太平', stopKw: '天耀' }, // 新增 276A
       { route: '276B', dir: 'O', dest: '上水', stopKw: '天慈' },
       { route: '269M', dir: 'O', dest: '祖堯', stopKw: '天慈' },
       { route: 'B1',   dir: 'O', dest: '落馬洲', stopKw: '天慈' },
-      { route: '265B', dir: 'O', dest: '旺角', stopKw: '天慈' },
       { route: '269C', dir: 'O', dest: '觀塘', stopKw: '天祐' },
       { route: '269D', dir: 'O', dest: '瀝源', stopKw: '天祐' }
     ];
 
+    const CTB_ROUTES = [
+      { route: '969', dir: 'outbound', dest: '銅鑼灣', stopKw: '天耀' } // 新增城巴 969
+    ];
+
     let kmbStopDict = {}; 
+    let ctbStopDict = {}; 
     let nlbB2pInfo = null;
 
     function formatTimeZeros(nowObj) {
@@ -230,7 +253,7 @@
           document.getElementById('forecast-range').textContent = `預測: ${today.forecastMintemp.value}° ~ ${today.forecastMaxtemp.value}°`;
           document.getElementById('rain-info').textContent = today.PSR;
         }
-      } catch (e) { console.error('天氣API錯誤', e); }
+      } catch (e) {}
     }
 
     async function fetchHourlyWeather() {
@@ -254,24 +277,16 @@
            const timeStr = timeObj.getHours().toString().padStart(2, '0') + ':00';
            const prob = probs[i];
            
-           let icon = '☁️';
-           let probClass = 'h-prob';
-           
+           let icon = '☁️'; let probClass = 'h-prob';
            if (prob >= 70) { icon = '🌧️'; probClass += ' high'; }
            else if (prob >= 40) icon = '🌦️';
            else if (prob > 10) icon = '🌥️';
            else icon = '☀️';
            
-           html += `
-             <div class="hourly-item" style="background: ${prob > 40 ? '#EFF6FF' : 'transparent'}">
-               <div class="h-time">${timeStr}</div>
-               <div class="h-icon">${icon}</div>
-               <div class="${probClass}">${prob}%</div>
-             </div>
-           `;
+           html += `<div class="hourly-item" style="background: ${prob > 40 ? '#EFF6FF' : 'transparent'}"><div class="h-time">${timeStr}</div><div class="h-icon">${icon}</div><div class="${probClass}">${prob}%</div></div>`;
         }
         document.getElementById('hourly-container').innerHTML = html;
-      } catch (e) { console.error('每小時天氣 API 錯誤', e); }
+      } catch (e) {}
     }
 
     function parseSafeDate(dateStr) {
@@ -305,24 +320,21 @@
       let railHtml = ''; let busHtml = '';
       const now = new Date();
 
+      // [1] 屯馬線
       try {
-        // [1] 屯馬線
         const mtrRes = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=TML&sta=${MTR_TML_STATION}`).then(r=>r.json());
         if (mtrRes.data && mtrRes.data[`TML-${MTR_TML_STATION}`]) {
           const tml = mtrRes.data[`TML-${MTR_TML_STATION}`];
           const getEta = (arr, index) => arr && arr[index] && arr[index].ttnt ? arr[index].ttnt + ' 分鐘' : '';
-          
-          const up1 = getEta(tml.UP, 0); const up2 = getEta(tml.UP, 1);
-          railHtml += createCard('mtr', '屯馬線', '烏溪沙', up1 || '尾班車已開', up2);
-          
-          const dn1 = getEta(tml.DOWN, 0); const dn2 = getEta(tml.DOWN, 1);
-          railHtml += createCard('mtr', '屯馬線', '屯門', dn1 || '尾班車已開', dn2);
+          railHtml += createCard('mtr', '屯馬線', '烏溪沙', getEta(tml.UP, 0) || '尾班車已開', getEta(tml.UP, 1));
+          railHtml += createCard('mtr', '屯馬線', '屯門', getEta(tml.DOWN, 0) || '尾班車已開', getEta(tml.DOWN, 1));
         }
+      } catch (e) { railHtml += createCard('mtr', '屯馬線', '系統錯誤', '連線失敗', ''); }
 
-        // [2] 輕鐵
+      // [2] 輕鐵
+      try {
         const lrtRes = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${LRT_STATION}`).then(r=>r.json());
         let lrtDataMap = {};
-        
         if (lrtRes.platform_list) {
           lrtRes.platform_list.forEach(plat => {
             if(plat.route_list) {
@@ -336,77 +348,72 @@
             }
           });
         }
-        
         LRT_EXPECTED_ROUTES.forEach(ex => {
            const key = `${ex.route}-${ex.dest}`;
            if(lrtDataMap[key]) {
               const g = lrtDataMap[key];
-              const formatTime = (t) => {
-                 if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
-                 return t.replace(/ mins?/gi, '') + ' 分鐘';
-              };
+              const formatTime = (t) => { if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達'; return t.replace(/ mins?/gi, '') + ' 分鐘'; };
               railHtml += createCard('lrt', g.route, g.dest, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
               delete lrtDataMap[key]; 
-           } else {
-              railHtml += createCard('lrt', ex.route, ex.dest, '暫無班次', '');
-           }
+           } else { railHtml += createCard('lrt', ex.route, ex.dest, '暫無班次', ''); }
         });
-        
         Object.values(lrtDataMap).forEach(g => {
-           const formatTime = (t) => {
-              if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達';
-              return t.replace(/ mins?/gi, '') + ' 分鐘';
-           };
+           const formatTime = (t) => { if(!t || t==='-' || t.toLowerCase()==='arriving') return '即將到達'; return t.replace(/ mins?/gi, '') + ' 分鐘'; };
            railHtml += createCard('lrt', g.route, g.dest, formatTime(g.times[0]), g.times[1] ? formatTime(g.times[1]) : '');
         });
+      } catch (e) { railHtml += createCard('lrt', '輕鐵', '系統錯誤', '連線失敗', ''); }
 
-        // [3] KMB 九巴
-        for(let r of KMB_ROUTES) {
+      // [3] KMB 九巴 (獨立 Try Catch 防火牆)
+      for(let r of KMB_ROUTES) {
+        try {
           if(kmbStopDict[r.route]) {
             const info = kmbStopDict[r.route];
             const kmbRes = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${info.stopId}/${r.route}/1`).then(res=>res.json());
             const validEtas = kmbRes.data.filter(e => e.dir === r.dir && e.eta).map(e => e.eta).sort();
             const etas = validEtas.map(etaStr => Math.max(0, Math.floor((parseSafeDate(etaStr) - now) / 60000)));
-            
-            if(etas.length > 0) {
-              busHtml += createCard('kmb', r.route, r.dest, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
-            } else {
-              busHtml += createCard('kmb', r.route, r.dest, '暫無班次', '');
-            }
-          } else {
-             busHtml += createCard('kmb', r.route, r.dest, '讀取中...', '');
-          }
-        }
+            if(etas.length > 0) busHtml += createCard('kmb', r.route, r.dest, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
+            else busHtml += createCard('kmb', r.route, r.dest, '暫無班次', '');
+          } else { busHtml += createCard('kmb', r.route, r.dest, '連線中...', ''); }
+        } catch (e) { busHtml += createCard('kmb', r.route, r.dest, '連線失敗', ''); }
+      }
 
-        // [4] K73 港鐵巴士
-        let k73Card = createCard('mtr', 'K73', '元朗西', '暫無班次', '');
-        const mtrbRes = await fetch('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', {
-          method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({language: "zh", routeName: "K73"})
-        }).then(r=>r.json());
+      // [4] CTB 城巴 969 (獨立 Try Catch)
+      for(let r of CTB_ROUTES) {
+        try {
+          if(ctbStopDict[r.route]) {
+            const info = ctbStopDict[r.route];
+            const ctbRes = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${info.stopId}/${r.route}`).then(res=>res.json());
+            const validEtas = ctbRes.data.filter(e => e.dir === 'O' && e.eta).map(e => e.eta).sort();
+            const etas = validEtas.map(etaStr => Math.max(0, Math.floor((parseSafeDate(etaStr) - now) / 60000)));
+            if(etas.length > 0) busHtml += createCard('ctb', r.route, r.dest, etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
+            else busHtml += createCard('ctb', r.route, r.dest, '暫無班次', '');
+          } else { busHtml += createCard('ctb', r.route, r.dest, '連線中...', ''); }
+        } catch (e) { busHtml += createCard('ctb', r.route, r.dest, '連線失敗', ''); }
+      }
+
+      // [5] K73 港鐵巴士 (獨立 Try Catch)
+      try {
+        const mtrbRes = await fetch('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({language: "zh", routeName: "K73"}) }).then(r=>r.json());
         if(mtrbRes.busStop) {
           const targetStop = mtrbRes.busStop.find(s => s.busStopName.includes(MY_STOP_NAME));
           if(targetStop && targetStop.bus && targetStop.bus.length > 0) {
             const e1 = targetStop.bus[0].departureTimeInMinute; const e2 = targetStop.bus[1]?.departureTimeInMinute;
-            k73Card = createCard('mtr', 'K73', '元朗西', e1==='0'?'即將到達':e1+' 分鐘', e2?(e2==='0'?'即將到達':e2+' 分鐘'):'');
-          }
+            busHtml += createCard('mtr', 'K73', '元朗西', e1==='0'?'即將到達':e1+' 分鐘', e2?(e2==='0'?'即將到達':e2+' 分鐘'):'');
+          } else { busHtml += createCard('mtr', 'K73', '元朗西', '暫無班次', ''); }
         }
-        busHtml += k73Card;
+      } catch (e) { busHtml += createCard('mtr', 'K73', '元朗西', '連線失敗', ''); }
 
-        // [5] B2P 新大嶼山巴士 (修復：掃描來回兩條路線搵天慈站)
+      // [6] B2P 新大嶼山巴士 (獨立 Try Catch)
+      try {
         if(nlbB2pInfo) {
           const info = nlbB2pInfo;
           const nlbRes = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop-eta.php?action=eta&routeId=${info.routeId}&stopId=${info.stopId}&language=zh`).then(r=>r.json());
           if(nlbRes.estimatedArrivals && nlbRes.estimatedArrivals.length > 0) {
             const etas = nlbRes.estimatedArrivals.map(e => Math.max(0, Math.floor((parseSafeDate(e.estimatedArrivalTime) - now) / 60000)));
             busHtml += createCard('nlb', 'B2P', '深圳灣', etas[0] + ' 分鐘', etas[1] ? etas[1] + ' 分鐘' : '');
-          } else {
-            busHtml += createCard('nlb', 'B2P', '深圳灣', '暫無班次', '');
-          }
-        } else {
-           busHtml += createCard('nlb', 'B2P', '深圳灣', '未獲取數據', '');
-        }
-
-      } catch (e) { console.error('更新交通失敗', e); }
+          } else { busHtml += createCard('nlb', 'B2P', '深圳灣', '暫無班次', ''); }
+        } else { busHtml += createCard('nlb', 'B2P', '深圳灣', '連線中...', ''); }
+      } catch (e) { busHtml += createCard('nlb', 'B2P', '深圳灣', '連線失敗', ''); }
       
       let finalHtml = '';
       if(railHtml) finalHtml += `<div class="category-title">🚇 鐵路交通 (屯馬線 & 輕鐵)</div><div class="routes-grid">${railHtml}</div>`;
@@ -418,50 +425,52 @@
 
     async function autoFindStopIds() {
       try {
+        // 九巴
         const kmbAllStops = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop').then(r=>r.json()).then(j=>j.data);
         for(let r of KMB_ROUTES) {
           const apiDir = r.dir === 'O' ? 'outbound' : 'inbound';
           const routeStops = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${r.route}/${apiDir}/1`).then(r=>r.json()).then(j=>j.data);
-          
           for(let rs of routeStops) {
             const sInfo = kmbAllStops.find(s => s.stop === rs.stop);
             if(sInfo && sInfo.name_tc.includes(r.stopKw)) {
-              kmbStopDict[r.route] = { stopId: rs.stop, stopName: sInfo.name_tc };
-              break;
+              kmbStopDict[r.route] = { stopId: rs.stop, stopName: sInfo.name_tc }; break;
             }
           }
         }
         
-        // 尋找大嶼山巴士 B2P (完美修復版)
+        // 城巴 (並行尋找前 15 個車站，加快速度)
+        for (let r of CTB_ROUTES) {
+           const routeStops = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${r.route}/${r.dir}`).then(res=>res.json()).then(j=>j.data);
+           const first15 = routeStops.slice(0, 15);
+           const stopDetails = await Promise.all(first15.map(rs => fetch(`https://rt.data.gov.hk/v2/transport/citybus/stop/${rs.stop}`).then(res=>res.json()).then(j=>j.data)));
+           const target = stopDetails.find(s => s && s.name_tc.includes(r.stopKw));
+           if(target) ctbStopDict[r.route] = { stopId: target.stop, stopName: target.name_tc };
+        }
+        
+        // NLB
         const nlbRoutes = await fetch('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list').then(r=>r.json()).then(j=>j.routes);
         const b2pRoutes = nlbRoutes.filter(r => r.routeName_c === 'B2P');
-        
         for(let r of b2pRoutes) {
           const nlbStops = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${r.routeId}`).then(res=>res.json()).then(j=>j.stops);
           const targetStop = nlbStops.find(s => s.stopName_c.includes(MY_STOP_NAME));
-          if(targetStop) {
-            nlbB2pInfo = { routeId: r.routeId, stopId: targetStop.stopId, stopName: targetStop.stopName_c };
-            break;
-          }
+          if(targetStop) { nlbB2pInfo = { routeId: r.routeId, stopId: targetStop.stopId, stopName: targetStop.stopName_c }; break; }
         }
         
         fetchAllTransport();
-      } catch(e) { console.error('尋找車站ID失敗', e); }
+      } catch(e) {}
     }
 
     async function forceUpdate() {
-      const icon = document.getElementById('refresh-icon');
-      const timeText = document.getElementById('update-time');
-      
-      icon.classList.add('spin-anim');
-      timeText.textContent = '獲取最新資訊中...';
+      // 顯示毛玻璃 Loading
+      const loader = document.getElementById('full-loader');
+      loader.classList.remove('hidden');
       
       try {
         await Promise.all([fetchWeather(), fetchHourlyWeather(), fetchAllTransport()]);
       } catch (e) {
-        console.error(e);
       } finally {
-        setTimeout(() => icon.classList.remove('spin-anim'), 500);
+        // 等待最少 800ms 俾個動畫轉下，感覺良好啲
+        setTimeout(() => { loader.classList.add('hidden'); }, 800);
       }
     }
 
