@@ -8,7 +8,7 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Smart Home Dashboard</title>
   <style>
-    /* 全局字體比例調整 */
+    /* 全局字體比例調整，適配 15 張卡片 */
     html { font-size: 110%; }
     
     :root {
@@ -20,11 +20,8 @@
     
     body { background-color: var(--bg); color: var(--text-main); padding: 10px 18px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
     
-    /* =========================================
-       上部分：頂部控制台
-       ========================================= */
+    /* =================上部分================= */
     .top-panel { background: var(--card-bg); border-radius: var(--radius); padding: 12px 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-    
     .time-area { display: flex; flex-direction: column; justify-content: center; min-width: 160px; }
     .time { font-size: 3.8rem; font-weight: 800; color: #1E293B; letter-spacing: -1px; line-height: 1; }
     .date { font-size: 1.15rem; color: var(--text-sub); font-weight: 600; padding-left: 5px; margin-top: 4px; }
@@ -47,9 +44,7 @@
     .metric-label { font-size: 0.8rem; font-weight: 700; opacity: 0.85; }
     .metric-value { font-size: 1.3rem; font-weight: 800; line-height: 1.2; }
 
-    /* =========================================
-       中部分：每小時降雨機率
-       ========================================= */
+    /* =================中部分================= */
     .mid-panel { background: var(--card-bg); border-radius: var(--radius); padding: 8px 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; }
     .mid-title { font-size: 1rem; font-weight: 800; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
     .hourly-container { display: flex; justify-content: space-between; align-items: center; width: 100%; }
@@ -59,9 +54,7 @@
     .h-prob { font-size: 1rem; font-weight: 800; color: #3498DB; }
     .h-prob.high { color: #E74C3C; }
 
-    /* =========================================
-       下部分：交通實時到站
-       ========================================= */
+    /* =================下部分================= */
     .bottom-panel { background: var(--card-bg); border-radius: var(--radius); padding: 12px 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #ECEFF1; padding-bottom: 6px; margin-bottom: 4px; flex-shrink: 0; }
     .update-btn { background: var(--primary); color: white; border: none; padding: 6px 16px; border-radius: 20px; font-size: 0.95rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(52,152,219,0.3); transition: opacity 0.2s; }
@@ -85,9 +78,8 @@
     .sq-mid { width: 100%; font-size: 1rem; font-weight: 800; color: #1E293B; margin: auto 0; }
     .sq-bot { width: 100%; }
     
-    /* ETA 狀態字體顏色設定 */
     .eta-min { font-size: 1.3rem; font-weight: 800; color: var(--green); line-height: 1.1; }
-    .eta-min.fallback { font-size: 1.05rem; color: #3498DB; } /* 替代方案專用藍色字體 */
+    .eta-min.fallback { font-size: 1.05rem; color: #3498DB; } 
     .error-text { font-size: 0.9rem; color: #94A3B8; font-weight: 700; line-height: 1.1; padding: 2px 0;} 
     .eta-next { font-size: 0.7rem; color: var(--text-sub); margin-top: 2px; min-height: 12px; }
 
@@ -168,7 +160,6 @@
     const MTR_TML_STATION = 'TIS'; 
     const LRT_STATION = '435'; 
 
-    // 新增 fallback 參數，作為無數據時的「優雅降級」替代文字
     const BUS_ROUTES = [
       { id: '276A', type: 'kmb', dest: '太平', stopKw: '天耀', dir: 'O', fallback: '請點擊刷新' },
       { id: '276B', type: 'kmb', dest: '上水', stopKw: '天慈', dir: 'O', fallback: '請點擊刷新' },
@@ -178,8 +169,8 @@
       { id: '269C', type: 'kmb', dest: '觀塘', stopKw: '天祐', dir: 'O', fallback: '請點擊刷新' },
       { id: '269D', type: 'kmb', dest: '瀝源', stopKw: '天祐', dir: 'O', fallback: '請點擊刷新' },
       { id: '969',  type: 'ctb', dest: '銅鑼灣', stopKw: '天耀', dir: 'outbound', fallback: '請點擊刷新' },
-      { id: 'K73',  type: 'mtrb', dest: '元朗西', stopKw: '天慈', dir: 'O', fallback: '約 10-15 分鐘' }, // 港鐵巴士替代方案
-      { id: 'B2P',  type: 'nlb', dest: '深圳灣', stopKw: '天慈', dir: 'O', fallback: '假日/定點班次' } // 大嶼山巴士替代方案
+      { id: 'K73',  type: 'mtrb', dest: '元朗西', stopKw: '天慈', dir: 'O', fallback: '約 10-15 分鐘' }, 
+      { id: 'B2P',  type: 'nlb', dest: '深圳灣', stopKw: '天慈', dir: 'O', fallback: '假日/定點班次' } 
     ];
 
     let cachedStopIds = {}; 
@@ -263,17 +254,15 @@
       return new Date(s);
     }
 
-    // 優化字眼處理，加入 UX 替代方案 (Graceful Degradation)
     function createCard(id, type, route, dest, eta1, eta2, isLoading = false) {
       let primaryEta = eta1 || '請點擊刷新';
       let errorClass = 'error-text';
       
-      // 辨識是否為替代方案文字
       const isFallbackInfo = primaryEta.includes('約') || primaryEta.includes('假日') || primaryEta.includes('定點');
 
       if (primaryEta === '目前無班次' || primaryEta === '暫無班次') { primaryEta = '請點擊刷新'; }
       if (primaryEta === '連線失敗' || primaryEta === '無法連接' || primaryEta === '系統錯誤' || primaryEta === '暫時中線') {
-          primaryEta = '請點擊刷新'; // 統一顯示較為友善的字眼
+          primaryEta = '請點擊刷新';
       }
       if (primaryEta === '尾班車已開出') primaryEta = '尾班車已開';
 
@@ -288,11 +277,9 @@
           if (eta2) etaNextHtml = `<div class="eta-next">下班: ${eta2}</div>`;
           else etaNextHtml = `<div class="eta-next" style="opacity: 0.6;">其後暫無班次</div>`;
       } else if (isFallbackInfo) {
-          // 替代方案 UI：藍色文字，下方備註為官方表定班次
           etaMainHtml = `<div class="eta-min fallback">${primaryEta}</div>`;
           etaNextHtml = `<div class="eta-next" style="opacity: 0.8; color: #3498DB;">(官方表定班次)</div>`;
       } else {
-          // 錯誤/無數據 UI
           etaMainHtml = `<div class="${errorClass}">${primaryEta}</div>`;
       }
 
@@ -385,7 +372,6 @@
           if(cachedStopIds[busInfo.id]) {
             const etasData = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${cachedStopIds[busInfo.id]}/${busInfo.id}/1`).then(res=>res.json());
             const etas = etasData.data.filter(e => e.dir === busInfo.dir && e.eta).map(e => Math.max(0, Math.floor((parseSafeDate(e.eta) - now) / 60000))).sort((a,b)=>a-b);
-            // KMB 如果無車，使用預設替代字眼
             updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, etas[0] !== undefined ? etas[0] + ' 分鐘' : busInfo.fallback, etas[1] !== undefined ? etas[1] + ' 分鐘' : '');
           } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); }
 
@@ -421,7 +407,7 @@
             if(targetStop && targetStop.bus && targetStop.bus.length > 0) {
               const e1 = targetStop.bus[0].departureTimeInMinute; const e2 = targetStop.bus[1]?.departureTimeInMinute;
               updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, e1==='0'?'即將到達':e1+' 分鐘', e2?(e2==='0'?'即將到達':e2+' 分鐘'):'');
-            } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); } // K73 斷線時降級為「約 10-15 分鐘」
+            } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); } 
           } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); }
 
         } else if (busInfo.type === 'nlb') {
@@ -442,11 +428,10 @@
             if(etasData.estimatedArrivals && etasData.estimatedArrivals.length > 0) {
               const etas = etasData.estimatedArrivals.map(e => Math.max(0, Math.floor((parseSafeDate(e.estimatedArrivalTime) - now) / 60000)));
               updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, etas[0] !== undefined ? etas[0] + ' 分鐘' : busInfo.fallback, etas[1] !== undefined ? etas[1] + ' 分鐘' : '');
-            } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); } // B2P 降級為「假日/定點班次」
+            } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); }
           } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); }
         }
       } catch (e) {
-        // 如果連線完全失敗，亦會啟動降級方案
         updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, '');
       }
     }
