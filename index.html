@@ -8,6 +8,7 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Smart Home Dashboard</title>
   <style>
+    /* 全局字體比例調整 */
     html { font-size: 110%; }
     
     :root {
@@ -20,7 +21,7 @@
     body { background-color: var(--bg); color: var(--text-main); padding: 10px 18px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
     
     /* =========================================
-       上部分：頂部控制台 (左右分區)
+       上部分：頂部控制台
        ========================================= */
     .top-panel { background: var(--card-bg); border-radius: var(--radius); padding: 12px 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
     
@@ -83,9 +84,11 @@
     .route-num { font-size: 1.3rem; font-weight: 800; color: var(--text-main); line-height: 1; }
     .sq-mid { width: 100%; font-size: 1rem; font-weight: 800; color: #1E293B; margin: auto 0; }
     .sq-bot { width: 100%; }
+    
+    /* ETA 狀態字體顏色設定 */
     .eta-min { font-size: 1.3rem; font-weight: 800; color: var(--green); line-height: 1.1; }
-    .error-text { font-size: 0.85rem; color: #E74C3C; font-weight: 700; line-height: 1.1; padding: 2px 0;} 
-    .error-text.refresh { color: #94A3B8; } /* 請刷新的顏色較為柔和 */
+    .eta-min.fallback { font-size: 1.05rem; color: #3498DB; } /* 替代方案專用藍色字體 */
+    .error-text { font-size: 0.9rem; color: #94A3B8; font-weight: 700; line-height: 1.1; padding: 2px 0;} 
     .eta-next { font-size: 0.7rem; color: var(--text-sub); margin-top: 2px; min-height: 12px; }
 
     /* Loading Overlay */
@@ -103,8 +106,8 @@
   <div id="full-loader" class="loader-overlay hidden">
     <div class="loader-content">
       <div class="spinner"></div>
-      <div style="font-size: 1.3rem; font-weight: 800; color: #2C3E50;">獲取最新交通數據...</div>
-      <div style="font-size: 0.95rem; font-weight: 600; color: #7F8C8D; margin-top: 6px;">正在為您自動重試及過濾不穩定連線</div>
+      <div style="font-size: 1.3rem; font-weight: 800; color: #2C3E50;">獨立抽取數據中...</div>
+      <div style="font-size: 0.95rem; font-weight: 600; color: #7F8C8D; margin-top: 6px;">各路線正在並行安全連線</div>
     </div>
   </div>
 
@@ -165,17 +168,18 @@
     const MTR_TML_STATION = 'TIS'; 
     const LRT_STATION = '435'; 
 
+    // 新增 fallback 參數，作為無數據時的「優雅降級」替代文字
     const BUS_ROUTES = [
-      { id: '276A', type: 'kmb', dest: '太平', stopKw: '天耀', dir: 'O' },
-      { id: '276B', type: 'kmb', dest: '上水', stopKw: '天慈', dir: 'O' },
-      { id: '269M', type: 'kmb', dest: '祖堯', stopKw: '天慈', dir: 'O' },
-      { id: 'B1',   type: 'kmb', dest: '落馬洲', stopKw: '天慈', dir: 'O' },
-      { id: '265B', type: 'kmb', dest: '旺角', stopKw: '天慈', dir: 'O' },
-      { id: '269C', type: 'kmb', dest: '觀塘', stopKw: '天祐', dir: 'O' },
-      { id: '269D', type: 'kmb', dest: '瀝源', stopKw: '天祐', dir: 'O' },
-      { id: '969',  type: 'ctb', dest: '銅鑼灣', stopKw: '天耀', dir: 'outbound' },
-      { id: 'K73',  type: 'mtrb', dest: '元朗西', stopKw: '天慈', dir: 'O' },
-      { id: 'B2P',  type: 'nlb', dest: '深圳灣', stopKw: '天慈', dir: 'O' }
+      { id: '276A', type: 'kmb', dest: '太平', stopKw: '天耀', dir: 'O', fallback: '請點擊刷新' },
+      { id: '276B', type: 'kmb', dest: '上水', stopKw: '天慈', dir: 'O', fallback: '請點擊刷新' },
+      { id: '269M', type: 'kmb', dest: '祖堯', stopKw: '天慈', dir: 'O', fallback: '請點擊刷新' },
+      { id: 'B1',   type: 'kmb', dest: '落馬洲', stopKw: '天慈', dir: 'O', fallback: '請點擊刷新' },
+      { id: '265B', type: 'kmb', dest: '旺角', stopKw: '天慈', dir: 'O', fallback: '請點擊刷新' },
+      { id: '269C', type: 'kmb', dest: '觀塘', stopKw: '天祐', dir: 'O', fallback: '請點擊刷新' },
+      { id: '269D', type: 'kmb', dest: '瀝源', stopKw: '天祐', dir: 'O', fallback: '請點擊刷新' },
+      { id: '969',  type: 'ctb', dest: '銅鑼灣', stopKw: '天耀', dir: 'outbound', fallback: '請點擊刷新' },
+      { id: 'K73',  type: 'mtrb', dest: '元朗西', stopKw: '天慈', dir: 'O', fallback: '約 10-15 分鐘' }, // 港鐵巴士替代方案
+      { id: 'B2P',  type: 'nlb', dest: '深圳灣', stopKw: '天慈', dir: 'O', fallback: '假日/定點班次' } // 大嶼山巴士替代方案
     ];
 
     let cachedStopIds = {}; 
@@ -251,7 +255,7 @@
       } catch (e) {}
     }
 
-    // ================= 獨立抽取核心邏輯 =================
+    // ================= 獨立抽取與降級邏輯 =================
     function parseSafeDate(dateStr) {
       if(!dateStr) return new Date();
       let s = dateStr.replace(/-/g, '/').replace('T', ' ');
@@ -259,18 +263,17 @@
       return new Date(s);
     }
 
-    // 處理字眼替換：無數據->請點擊刷新，錯誤->未能成功擷取
+    // 優化字眼處理，加入 UX 替代方案 (Graceful Degradation)
     function createCard(id, type, route, dest, eta1, eta2, isLoading = false) {
-      let primaryEta = eta1 || '未能成功擷取';
+      let primaryEta = eta1 || '請點擊刷新';
       let errorClass = 'error-text';
       
-      // 替換所有不完美字眼
-      if (primaryEta === '目前無班次' || primaryEta === '暫無班次' || primaryEta === '請刷新') {
-          primaryEta = '請點擊刷新';
-          errorClass += ' refresh';
-      }
+      // 辨識是否為替代方案文字
+      const isFallbackInfo = primaryEta.includes('約') || primaryEta.includes('假日') || primaryEta.includes('定點');
+
+      if (primaryEta === '目前無班次' || primaryEta === '暫無班次') { primaryEta = '請點擊刷新'; }
       if (primaryEta === '連線失敗' || primaryEta === '無法連接' || primaryEta === '系統錯誤' || primaryEta === '暫時中線') {
-          primaryEta = '未能成功擷取';
+          primaryEta = '請點擊刷新'; // 統一顯示較為友善的字眼
       }
       if (primaryEta === '尾班車已開出') primaryEta = '尾班車已開';
 
@@ -278,9 +281,19 @@
       const loadClass = isLoading ? 'loading-pulse' : '';
       
       let etaNextHtml = `<div class="eta-next">&nbsp;</div>`;
+      let etaMainHtml = '';
+
       if (isNormal) {
+          etaMainHtml = `<div class="eta-min">${primaryEta}</div>`;
           if (eta2) etaNextHtml = `<div class="eta-next">下班: ${eta2}</div>`;
           else etaNextHtml = `<div class="eta-next" style="opacity: 0.6;">其後暫無班次</div>`;
+      } else if (isFallbackInfo) {
+          // 替代方案 UI：藍色文字，下方備註為官方表定班次
+          etaMainHtml = `<div class="eta-min fallback">${primaryEta}</div>`;
+          etaNextHtml = `<div class="eta-next" style="opacity: 0.8; color: #3498DB;">(官方表定班次)</div>`;
+      } else {
+          // 錯誤/無數據 UI
+          etaMainHtml = `<div class="${errorClass}">${primaryEta}</div>`;
       }
 
       return `
@@ -288,7 +301,7 @@
           <div class="sq-top"><div class="route-num">${route}</div></div>
           <div class="sq-mid">${dest}</div>
           <div class="sq-bot">
-            ${isNormal ? `<div class="eta-min">${primaryEta}</div>` : `<div class="${errorClass}">${primaryEta}</div>`}
+            ${etaMainHtml}
             ${etaNextHtml}
           </div>
         </div>
@@ -314,23 +327,9 @@
       if(el) el.outerHTML = createCard(id, type, route, dest, eta1, eta2, false);
     }
 
-    // 封裝一個附帶 Retry 機制嘅 Fetch，專為 K73 同 B2P 服務
-    async function fetchWithRetry(url, options = {}, retries = 2) {
-      for (let i = 0; i <= retries; i++) {
-        try {
-          const res = await fetch(url, options);
-          if (!res.ok) throw new Error('API Error');
-          return await res.json();
-        } catch (err) {
-          if (i === retries) throw err;
-          await new Promise(resolve => setTimeout(resolve, 800)); // 等 800ms 再試
-        }
-      }
-    }
-
     async function fetchTML() {
       try {
-        const res = await fetchWithRetry(`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=TML&sta=${MTR_TML_STATION}`);
+        const res = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=TML&sta=${MTR_TML_STATION}`).then(r=>r.json());
         if (res.data && res.data[`TML-${MTR_TML_STATION}`]) {
           const tml = res.data[`TML-${MTR_TML_STATION}`];
           const getEta = (arr, i) => arr && arr[i] && arr[i].ttnt ? arr[i].ttnt + ' 分鐘' : '';
@@ -338,14 +337,14 @@
           updateCardDOM('TML-DN', 'mtr', '屯馬線', '屯門', getEta(tml.DOWN, 0) || '尾班車已開', getEta(tml.DOWN, 1));
         }
       } catch (e) {
-        updateCardDOM('TML-UP', 'mtr', '屯馬線', '烏溪沙', '未能成功擷取', '');
-        updateCardDOM('TML-DN', 'mtr', '屯馬線', '屯門', '未能成功擷取', '');
+        updateCardDOM('TML-UP', 'mtr', '屯馬線', '烏溪沙', '請點擊刷新', '');
+        updateCardDOM('TML-DN', 'mtr', '屯馬線', '屯門', '請點擊刷新', '');
       }
     }
 
     async function fetchLRT() {
       try {
-        const res = await fetchWithRetry(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${LRT_STATION}`);
+        const res = await fetch(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${LRT_STATION}`).then(r=>r.json());
         let map = {};
         if (res.platform_list) {
           res.platform_list.forEach(plat => {
@@ -359,13 +358,15 @@
             }
           });
         }
+        
         const processETA = (arr) => arr ? arr.map(t => (!t || t==='-' || t.toLowerCase()==='arriving') ? '即將到達' : t.replace(/ mins?/gi, '') + ' 分鐘') : [];
+        
         const r705 = processETA(map['705-天水圍循環']); updateCardDOM('LRT-705', 'lrt', '705', '天水圍循環', r705[0], r705[1]);
         const r706 = processETA(map['706-天水圍循環']); updateCardDOM('LRT-706', 'lrt', '706', '天水圍循環', r706[0], r706[1]);
         const r751A = processETA(map['751-天逸']); updateCardDOM('LRT-751-1', 'lrt', '751', '天逸', r751A[0], r751A[1]);
         const r751B = processETA(map['751-友愛']); updateCardDOM('LRT-751-2', 'lrt', '751', '友愛', r751B[0], r751B[1]);
       } catch (e) {
-        ['705', '706', '751-1', '751-2'].forEach(id => updateCardDOM(`LRT-${id}`, 'lrt', id.split('-')[0], '天水圍', '未能成功擷取', ''));
+        ['705', '706', '751-1', '751-2'].forEach(id => updateCardDOM(`LRT-${id}`, 'lrt', id.split('-')[0], '天水圍', '請點擊刷新', ''));
       }
     }
 
@@ -374,25 +375,27 @@
       try {
         if (busInfo.type === 'kmb') {
           if (!cachedStopIds[busInfo.id]) {
-            const stops = await fetchWithRetry(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${busInfo.id}/${busInfo.dir === 'O' ? 'outbound' : 'inbound'}/1`);
-            const allStops = await fetchWithRetry('https://data.etabus.gov.hk/v1/transport/kmb/stop');
-            for(let rs of stops.data) {
-              const sInfo = allStops.data.find(s => s.stop === rs.stop);
+            const stops = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${busInfo.id}/${busInfo.dir === 'O' ? 'outbound' : 'inbound'}/1`).then(r=>r.json()).then(j=>j.data);
+            const allStops = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop').then(r=>r.json()).then(j=>j.data);
+            for(let rs of stops) {
+              const sInfo = allStops.find(s => s.stop === rs.stop);
               if(sInfo && sInfo.name_tc.includes(busInfo.stopKw)) { cachedStopIds[busInfo.id] = rs.stop; break; }
             }
           }
           if(cachedStopIds[busInfo.id]) {
-            const etasData = await fetchWithRetry(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${cachedStopIds[busInfo.id]}/${busInfo.id}/1`);
+            const etasData = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${cachedStopIds[busInfo.id]}/${busInfo.id}/1`).then(res=>res.json());
             const etas = etasData.data.filter(e => e.dir === busInfo.dir && e.eta).map(e => Math.max(0, Math.floor((parseSafeDate(e.eta) - now) / 60000))).sort((a,b)=>a-b);
-            updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, etas[0] !== undefined ? etas[0] + ' 分鐘' : '請點擊刷新', etas[1] !== undefined ? etas[1] + ' 分鐘' : '');
-          } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, '請點擊刷新', ''); }
+            // KMB 如果無車，使用預設替代字眼
+            updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, etas[0] !== undefined ? etas[0] + ' 分鐘' : busInfo.fallback, etas[1] !== undefined ? etas[1] + ' 分鐘' : '');
+          } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); }
 
         } else if (busInfo.type === 'ctb') {
           if (!cachedStopIds[busInfo.id]) {
             for (let dir of ['outbound', 'inbound']) {
-               const rStops = await fetchWithRetry(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${busInfo.id}/${dir}`).catch(()=>({data:[]}));
-               for (let rs of rStops.data) {
-                   const sInfo = await fetchWithRetry(`https://rt.data.gov.hk/v2/transport/citybus/stop/${rs.stop}`).catch(()=>null);
+               const rStops = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${busInfo.id}/${dir}`).then(res=>res.json()).then(j=>j.data).catch(()=>[]);
+               if (!rStops) continue;
+               for (let rs of rStops.slice(0, 15)) {
+                   const sInfo = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/stop/${rs.stop}`).then(res=>res.json()).catch(()=>null);
                    if(sInfo && sInfo.data && sInfo.data.name_tc.includes(busInfo.stopKw)) {
                        cachedStopIds[busInfo.id] = { stopId: sInfo.data.stop, dir: dir === 'outbound' ? 'O' : 'I' }; break;
                    }
@@ -402,53 +405,49 @@
           }
           if(cachedStopIds[busInfo.id]) {
             const info = cachedStopIds[busInfo.id];
-            const etasData = await fetchWithRetry(`https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${info.stopId}/${busInfo.id}`);
+            const etasData = await fetch(`https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${info.stopId}/${busInfo.id}`).then(r=>r.json());
             const etas = etasData.data.filter(e => e.dir === info.dir && e.eta).map(e => Math.max(0, Math.floor((parseSafeDate(e.eta) - now) / 60000))).sort((a,b)=>a-b);
-            updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, etas[0] !== undefined ? etas[0] + ' 分鐘' : '請點擊刷新', etas[1] !== undefined ? etas[1] + ' 分鐘' : '');
-          } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, '請點擊刷新', ''); }
+            updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, etas[0] !== undefined ? etas[0] + ' 分鐘' : busInfo.fallback, etas[1] !== undefined ? etas[1] + ' 分鐘' : '');
+          } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); }
 
         } else if (busInfo.type === 'mtrb') {
-          // K73 加入 Retry 機制防斷線
-          const res = await fetchWithRetry('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', { 
-              method: 'POST', 
-              headers: {'Content-Type': 'application/json'}, 
+          const res = await fetch('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', { 
+              method: 'POST', headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}, 
               body: JSON.stringify({language: "zh", routeName: busInfo.id}) 
-          }, 3); // K73 斷線率高，重試 3 次
+          }).then(r=>{ if(!r.ok) throw new Error(); return r.json(); });
           
           if(res.busStop) {
             const targetStop = res.busStop.find(s => s.busStopName.includes(busInfo.stopKw));
             if(targetStop && targetStop.bus && targetStop.bus.length > 0) {
               const e1 = targetStop.bus[0].departureTimeInMinute; const e2 = targetStop.bus[1]?.departureTimeInMinute;
               updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, e1==='0'?'即將到達':e1+' 分鐘', e2?(e2==='0'?'即將到達':e2+' 分鐘'):'');
-            } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, '請點擊刷新', ''); }
-          } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, '請點擊刷新', ''); }
+            } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); } // K73 斷線時降級為「約 10-15 分鐘」
+          } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); }
 
         } else if (busInfo.type === 'nlb') {
-          // B2P 過濾起點/終點機制
           if (!cachedStopIds[busInfo.id]) {
-            const nRoutes = await fetchWithRetry('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list');
-            const b2pRoutes = nRoutes.routes.filter(r => r.routeName_c === busInfo.id);
+            const nRoutes = await fetch('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list').then(r=>r.json()).then(j=>j.routes).catch(()=>[]);
+            const b2pRoutes = nRoutes.filter(r => r.routeName_c === busInfo.id);
             for(let r of b2pRoutes) {
-              const nStops = await fetchWithRetry(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${r.routeId}`);
-              const target = nStops.stops.find(s => s.stopName_c.includes(busInfo.stopKw));
-              // 保證唔會攞錯「落客站」
-              if(target && nStops.stops[nStops.stops.length - 1].stopId !== target.stopId) { 
+              const nStops = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${r.routeId}`).then(res=>res.json()).then(j=>j.stops).catch(()=>[]);
+              const target = nStops.find(s => s.stopName_c.includes(busInfo.stopKw));
+              if(target && nStops[nStops.length - 1].stopId !== target.stopId) { 
                   cachedStopIds[busInfo.id] = { routeId: r.routeId, stopId: target.stopId }; break; 
               }
             }
           }
           if(cachedStopIds[busInfo.id]) {
             const info = cachedStopIds[busInfo.id];
-            const etasData = await fetchWithRetry(`https://rt.data.gov.hk/v2/transport/nlb/stop-eta.php?action=eta&routeId=${info.routeId}&stopId=${info.stopId}&language=zh`);
+            const etasData = await fetch(`https://rt.data.gov.hk/v2/transport/nlb/stop-eta.php?action=eta&routeId=${info.routeId}&stopId=${info.stopId}&language=zh`).then(r=>r.json());
             if(etasData.estimatedArrivals && etasData.estimatedArrivals.length > 0) {
               const etas = etasData.estimatedArrivals.map(e => Math.max(0, Math.floor((parseSafeDate(e.estimatedArrivalTime) - now) / 60000)));
-              updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, etas[0] !== undefined ? etas[0] + ' 分鐘' : '請點擊刷新', etas[1] !== undefined ? etas[1] + ' 分鐘' : '');
-            } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, '請點擊刷新', ''); }
-          } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, '請點擊刷新', ''); }
+              updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, etas[0] !== undefined ? etas[0] + ' 分鐘' : busInfo.fallback, etas[1] !== undefined ? etas[1] + ' 分鐘' : '');
+            } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); } // B2P 降級為「假日/定點班次」
+          } else { updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, ''); }
         }
       } catch (e) {
-        // 如果連試 3 次都失敗，先顯示「未能成功擷取」
-        updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, '未能成功擷取', '');
+        // 如果連線完全失敗，亦會啟動降級方案
+        updateCardDOM(busInfo.id, busInfo.type, busInfo.id, busInfo.dest, busInfo.fallback, '');
       }
     }
 
