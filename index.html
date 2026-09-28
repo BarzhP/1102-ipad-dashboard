@@ -8,12 +8,13 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Smart Home Dashboard</title>
   <style>
+    /* 全局字體比例調整，適配 16 張卡片 */
     html { font-size: 110%; }
     
     :root {
       --bg: #F4F6F9; --card-bg: #FFFFFF; --text-main: #2C3E50; --text-sub: #7F8C8D;
       --kmb-red: #E3002B; --mtr-red: #92062C; --lrt-orange: #D35400; --nlb-blue: #2980B9;
-      --ctb-yellow: #F1C40F; --green: #27AE60; --primary: #3498DB; --radius: 18px;
+      --ctb-yellow: #F1C40F; --lwb-orange: #E67E22; --green: #27AE60; --primary: #3498DB; --radius: 18px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
@@ -63,18 +64,20 @@
 
     .transport-container { flex: 1; overflow-y: auto; padding-right: 5px; margin-right: -5px; }
     .transport-container::-webkit-scrollbar { display: none; }
-    .routes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(125px, 1fr)); gap: 8px; padding-bottom: 4px; }
+    /* 卡片寬度壓縮至 120px 容納 16 張卡片 */
+    .routes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding-bottom: 4px; }
     
     .transit-item { background: #F8FAFC; border-radius: 12px; padding: 8px 6px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; border-top: 6px solid #CBD5E1; height: 105px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
     .transit-item.mtr { border-top-color: var(--mtr-red); }
     .transit-item.lrt { border-top-color: var(--lrt-orange); }
     .transit-item.kmb { border-top-color: var(--kmb-red); }
+    .transit-item.lwb { border-top-color: var(--lwb-orange); } /* 龍運顏色 */
     .transit-item.ctb { border-top-color: var(--ctb-yellow); } 
     .transit-item.nlb { border-top-color: var(--nlb-blue); }
     
     .sq-top { width: 100%; }
     .route-num { font-size: 1.3rem; font-weight: 800; color: var(--text-main); line-height: 1; }
-    .sq-mid { width: 100%; font-size: 1rem; font-weight: 800; color: #1E293B; margin: auto 0; }
+    .sq-mid { width: 100%; font-size: 1rem; font-weight: 800; color: #1E293B; margin: auto 0; line-height: 1.2; }
     .sq-bot { width: 100%; }
     
     .eta-min { font-size: 1.3rem; font-weight: 800; color: var(--green); line-height: 1.1; }
@@ -168,6 +171,7 @@
       { id: '269C', type: 'kmb', dest: '觀塘', stopKw: '天祐', dir: 'O', fallback: '請點擊刷新' },
       { id: '269D', type: 'kmb', dest: '瀝源', stopKw: '天祐', dir: 'O', fallback: '請點擊刷新' },
       { id: '969',  type: 'ctb', dest: '銅鑼灣', stopId: '002153', dir: 'outbound', fallback: '請點擊刷新' }, 
+      { id: 'A37',  type: 'lwb', dest: '機場', stopKw: '天慈', dir: 'O', fallback: '請點擊刷新' }, 
       { id: 'K73',  type: 'mtrb', dest: '元朗西', stopKw: '天慈', dir: 'O', fallback: '約 10-15 分鐘' }, 
       { id: 'B2P',  type: 'nlb', dest: '深圳灣', stopKw: '天慈', dir: 'O', fallback: '假日/定點班次' } 
     ];
@@ -207,6 +211,7 @@
                else if (name.includes('季候風')) { bg = '#16A085'; icon = '💨'; }
                else if (name.includes('酷熱')) { bg = '#D35400'; icon = '🥵'; }
                else if (name.includes('寒冷')) { bg = '#2980B9'; icon = '🥶'; }
+               
                warnHtml += `<div style="background: ${bg}; color: ${textColor}; padding: 6px 12px; border-radius: 12px; font-weight: 800; font-size: 1rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 3px 8px rgba(0,0,0,0.15);"><span style="font-size: 1.4rem;">${icon}</span><span>${name}</span></div>`;
            });
            warnContainer.innerHTML = warnHtml;
@@ -378,7 +383,7 @@
     async function fetchSingleBus(busInfo) {
       const now = new Date();
       try {
-        if (busInfo.type === 'kmb') {
+        if (busInfo.type === 'kmb' || busInfo.type === 'lwb') {
           if (!cachedStopIds[busInfo.id]) {
             const stops = await fetchWithRetry(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${busInfo.id}/${busInfo.dir === 'O' ? 'outbound' : 'inbound'}/1`);
             const allStops = await fetchWithRetry('https://data.etabus.gov.hk/v1/transport/kmb/stop');
